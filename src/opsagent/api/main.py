@@ -24,15 +24,24 @@ from opsagent.config import settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Inicializar y cerrar recursos del servidor."""
-    # Startup
+    # Startup — DB failure is non-fatal: app falls back to in-memory mode
     if settings.db_enabled:
-        from opsagent.db.session import init_db
-        await init_db(settings.DATABASE_URL)
+        try:
+            from opsagent.db.session import init_db
+            await init_db(settings.DATABASE_URL)
+            logging.getLogger("opsagent").info("Database connected.")
+        except Exception as exc:
+            logging.getLogger("opsagent").warning(
+                "Database init failed, running without persistence: %s", exc
+            )
     yield
     # Shutdown
     if settings.db_enabled:
-        from opsagent.db.session import close_db
-        await close_db()
+        try:
+            from opsagent.db.session import close_db
+            await close_db()
+        except Exception:
+            pass
 
 
 app = FastAPI(
