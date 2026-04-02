@@ -55,13 +55,18 @@ def _build_context_message(state: OpsAgentState) -> str:
         if problemas:
             parts.append("Problemas encontrados: " + "; ".join(problemas))
 
+    # KPIs que son ratios (0-1) y deben mostrarse como porcentaje
+    _RATIO_KPIS = {"oee", "tasa_defectos", "fill_rate", "on_time_delivery"}
+
     # KPIs
     kpis = state.get("kpis", {})
     if kpis:
         parts.append("\nKPIs CALCULADOS:")
         for k, v in kpis.items():
-            if isinstance(v, float):
+            if isinstance(v, float) and k in _RATIO_KPIS:
                 parts.append(f"  - {k}: {v:.4f} ({v*100:.1f}%)")
+            elif isinstance(v, float):
+                parts.append(f"  - {k}: {v:.1f}")
             elif isinstance(v, dict):
                 parts.append(f"  - {k}:")
                 for sub_k, sub_v in v.items():

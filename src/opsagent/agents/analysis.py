@@ -42,31 +42,44 @@ def analysis_node(state: OpsAgentState) -> dict:
 
     logger.info("Analizando %d filas, dominio=%s", len(cleaned_data), domain)
 
-    # Calcular KPIs segun dominio
-    if domain == "manufactura":
-        kpis = calcular_kpis_manufactura(cleaned_data)
-    elif domain == "logistica":
-        kpis = calcular_kpis_logistica(cleaned_data)
-    else:
-        logger.info("Dominio '%s' no tiene KPIs especificos", domain)
-        kpis = {}
+    try:
+        # Calcular KPIs segun dominio
+        if domain == "manufactura":
+            kpis = calcular_kpis_manufactura(cleaned_data)
+        elif domain == "logistica":
+            kpis = calcular_kpis_logistica(cleaned_data)
+        else:
+            logger.info("Dominio '%s' no tiene KPIs especificos", domain)
+            kpis = {}
 
-    # Detectar anomalias en cada columna numerica
-    all_anomalies: list[dict] = []
-    for col in cleaned_data.select_dtypes(include="number").columns:
-        serie = cleaned_data[col].dropna().tolist()
-        anomalias = detectar_anomalias_estadisticas(serie, col)
-        all_anomalies.extend(anomalias)
+        # Detectar anomalias en cada columna numerica
+        all_anomalies: list[dict] = []
+        for col in cleaned_data.select_dtypes(include="number").columns:
+            serie = cleaned_data[col].dropna().tolist()
+            anomalias = detectar_anomalias_estadisticas(serie, col)
+            all_anomalies.extend(anomalias)
 
-    # Calcular tendencias simples
-    trends = _calcular_tendencias(cleaned_data)
+        # Calcular tendencias simples
+        trends = _calcular_tendencias(cleaned_data)
 
-    return {
-        "kpis": kpis,
-        "anomalies": all_anomalies,
-        "trends": trends,
-        "processing_status": "recommending",
-    }
+        logger.info("KPIs: %s | Anomalias: %d | Tendencias: %d", list(kpis.keys()), len(all_anomalies), len(trends))
+
+        return {
+            "kpis": kpis,
+            "anomalies": all_anomalies,
+            "trends": trends,
+            "processing_status": "recommending",
+        }
+
+    except Exception as exc:
+        logger.error("Error en analysis_node: %s", exc, exc_info=True)
+        return {
+            "kpis": {},
+            "anomalies": [],
+            "trends": [],
+            "processing_status": "error",
+            "error": f"Error en el análisis de datos: {exc}",
+        }
 
 
 def _calcular_tendencias(df: pd.DataFrame) -> list[dict]:

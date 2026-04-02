@@ -65,7 +65,7 @@ async def create_diagnose(
     """Ejecutar diagnostico operativo sobre un archivo subido."""
     content = await file.read()
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     try:
         df = await loop.run_in_executor(None, _parse_file, content, file.filename)
     except ValueError as e:
@@ -82,27 +82,35 @@ async def create_diagnose(
 
     diagnose_id = str(uuid.uuid4())
 
-    response = DiagnoseResponse(
-        id=diagnose_id,
-        status=result.get("processing_status", "done"),
-        detected_domain=result.get("detected_domain", "desconocido"),
-        executive_summary=result.get("executive_summary", ""),
-        kpis=result.get("kpis", {}),
-        anomalies=result.get("anomalies", []),
-        trends=result.get("trends", []),
-        diagnosis=result.get("diagnosis", ""),
-        recommendations=result.get("recommendations", []),
-        data_quality_report=result.get("data_quality_report", {}),
-        processing_time_seconds=round(elapsed, 2),
-        error=result.get("error"),
-        filename=file.filename,
-    )
+    try:
+        response = DiagnoseResponse(
+            id=diagnose_id,
+            status=result.get("processing_status", "done"),
+            detected_domain=result.get("detected_domain", "desconocido"),
+            executive_summary=result.get("executive_summary", ""),
+            kpis=result.get("kpis", {}),
+            anomalies=result.get("anomalies", []),
+            trends=result.get("trends", []),
+            diagnosis=result.get("diagnosis", ""),
+            recommendations=result.get("recommendations", []),
+            data_quality_report=result.get("data_quality_report", {}),
+            processing_time_seconds=round(elapsed, 2),
+            error=result.get("error"),
+            filename=file.filename,
+        )
+    except Exception as e:
+        logger.error("Error al construir DiagnoseResponse: %s | result keys: %s", e, list(result.keys()))
+        raise HTTPException(status_code=500, detail=f"Error al procesar resultado del pipeline: {e}")
 
     # Persistir en DB o fallback in-memory
     session = await _get_db_session()
     if session:
         from opsagent.db.repository import save_diagnosis
-        await save_diagnosis(session, response, user_id, file.filename)
+        try:
+            await save_diagnosis(session, response, user_id, file.filename)
+        except Exception as e:
+            logger.error("Error al guardar en DB, usando fallback in-memory: %s", e)
+            _diagnose_store[diagnose_id] = response
     else:
         _diagnose_store[diagnose_id] = response
 

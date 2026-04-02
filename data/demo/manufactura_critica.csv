@@ -1,0 +1,361 @@
+fecha,linea,turno,produccion_real,capacidad_teorica,defectos,tiempo_parada_min,horas_planificadas
+2026-01-05,Línea A - Torno CNC,manana,467,520,9,25,8
+2026-01-05,Línea B - Prensa Hidráulica,manana,343,520,35,84,8
+2026-01-05,Línea C - Soldadura,manana,414,520,34,38,8
+2026-01-05,Línea A - Torno CNC,tarde,468,520,8,16,8
+2026-01-05,Línea B - Prensa Hidráulica,tarde,298,520,18,46,8
+2026-01-05,Línea C - Soldadura,tarde,367,520,18,49,8
+2026-01-06,Línea A - Torno CNC,manana,446,520,4,31,8
+2026-01-06,Línea B - Prensa Hidráulica,manana,279,520,39,54,8
+2026-01-06,Línea C - Soldadura,manana,368,520,28,28,8
+2026-01-06,Línea A - Torno CNC,tarde,465,520,7,17,8
+2026-01-06,Línea B - Prensa Hidráulica,tarde,266,520,60,90,8
+2026-01-06,Línea C - Soldadura,tarde,356,520,35,27,8
+2026-01-07,Línea A - Torno CNC,manana,463,520,3,9,8
+2026-01-07,Línea B - Prensa Hidráulica,manana,292,520,47,95,8
+2026-01-07,Línea C - Soldadura,manana,377,520,25,24,8
+2026-01-07,Línea A - Torno CNC,tarde,449,520,8,28,8
+2026-01-07,Línea B - Prensa Hidráulica,tarde,297,520,18,99,8
+2026-01-07,Línea C - Soldadura,tarde,371,520,21,53,8
+2026-01-08,Línea A - Torno CNC,manana,475,520,13,13,8
+2026-01-08,Línea B - Prensa Hidráulica,manana,272,520,43,117,8
+2026-01-08,Línea C - Soldadura,manana,369,520,26,29,8
+2026-01-08,Línea A - Torno CNC,tarde,442,520,13,30,8
+2026-01-08,Línea B - Prensa Hidráulica,tarde,280,520,51,101,8
+2026-01-08,Línea C - Soldadura,tarde,365,520,31,66,8
+2026-01-09,Línea A - Torno CNC,manana,459,520,16,5,8
+2026-01-09,Línea B - Prensa Hidráulica,manana,308,520,40,85,8
+2026-01-09,Línea C - Soldadura,manana,382,520,10,41,8
+2026-01-09,Línea A - Torno CNC,tarde,465,520,15,15,8
+2026-01-09,Línea B - Prensa Hidráulica,tarde,253,520,33,116,8
+2026-01-09,Línea C - Soldadura,tarde,387,520,23,52,8
+2026-01-12,Línea A - Torno CNC,manana,461,520,13,14,8
+2026-01-12,Línea B - Prensa Hidráulica,manana,267,520,34,55,8
+2026-01-12,Línea C - Soldadura,manana,386,520,30,45,8
+2026-01-12,Línea A - Torno CNC,tarde,456,520,4,16,8
+2026-01-12,Línea B - Prensa Hidráulica,tarde,266,520,29,89,8
+2026-01-12,Línea C - Soldadura,tarde,388,520,44,47,8
+2026-01-13,Línea A - Torno CNC,manana,463,520,9,5,8
+2026-01-13,Línea B - Prensa Hidráulica,manana,275,520,40,159,8
+2026-01-13,Línea C - Soldadura,manana,375,520,30,44,8
+2026-01-13,Línea A - Torno CNC,tarde,442,520,14,26,8
+2026-01-13,Línea B - Prensa Hidráulica,tarde,302,520,28,131,8
+2026-01-13,Línea C - Soldadura,tarde,349,520,33,75,8
+2026-01-14,Línea A - Torno CNC,manana,445,520,7,20,8
+2026-01-14,Línea B - Prensa Hidráulica,manana,257,520,20,97,8
+2026-01-14,Línea C - Soldadura,manana,356,520,32,32,8
+2026-01-14,Línea A - Torno CNC,tarde,483,520,6,17,8
+2026-01-14,Línea B - Prensa Hidráulica,tarde,300,520,24,101,8
+2026-01-14,Línea C - Soldadura,tarde,408,520,13,47,8
+2026-01-15,Línea A - Torno CNC,manana,463,520,13,10,8
+2026-01-15,Línea B - Prensa Hidráulica,manana,228,520,47,103,8
+2026-01-15,Línea C - Soldadura,manana,385,520,31,35,8
+2026-01-15,Línea A - Torno CNC,tarde,463,520,11,14,8
+2026-01-15,Línea B - Prensa Hidráulica,tarde,333,520,46,64,8
+2026-01-15,Línea C - Soldadura,tarde,394,520,19,56,8
+2026-01-16,Línea A - Torno CNC,manana,477,520,6,27,8
+2026-01-16,Línea B - Prensa Hidráulica,manana,283,520,51,147,8
+2026-01-16,Línea C - Soldadura,manana,374,520,21,32,8
+2026-01-16,Línea A - Torno CNC,tarde,447,520,9,22,8
+2026-01-16,Línea B - Prensa Hidráulica,tarde,278,520,51,97,8
+2026-01-16,Línea C - Soldadura,tarde,411,520,25,83,8
+2026-01-19,Línea A - Torno CNC,manana,469,520,6,11,8
+2026-01-19,Línea B - Prensa Hidráulica,manana,283,520,38,116,8
+2026-01-19,Línea C - Soldadura,manana,390,520,27,33,8
+2026-01-19,Línea A - Torno CNC,tarde,437,520,8,26,8
+2026-01-19,Línea B - Prensa Hidráulica,tarde,274,520,24,102,8
+2026-01-19,Línea C - Soldadura,tarde,388,520,20,47,8
+2026-01-20,Línea A - Torno CNC,manana,460,520,5,22,8
+2026-01-20,Línea B - Prensa Hidráulica,manana,283,520,55,127,8
+2026-01-20,Línea C - Soldadura,manana,349,520,19,52,8
+2026-01-20,Línea A - Torno CNC,tarde,467,520,12,45,8
+2026-01-20,Línea B - Prensa Hidráulica,tarde,283,520,56,124,8
+2026-01-20,Línea C - Soldadura,tarde,394,520,25,55,8
+2026-01-21,Línea A - Torno CNC,manana,448,520,9,16,8
+2026-01-21,Línea B - Prensa Hidráulica,manana,266,520,72,47,8
+2026-01-21,Línea C - Soldadura,manana,395,520,13,38,8
+2026-01-21,Línea A - Torno CNC,tarde,476,520,10,11,8
+2026-01-21,Línea B - Prensa Hidráulica,tarde,240,520,50,78,8
+2026-01-21,Línea C - Soldadura,tarde,384,520,28,35,8
+2026-01-22,Línea A - Torno CNC,manana,492,520,12,5,8
+2026-01-22,Línea B - Prensa Hidráulica,manana,267,520,33,123,8
+2026-01-22,Línea C - Soldadura,manana,362,520,26,52,8
+2026-01-22,Línea A - Torno CNC,tarde,472,520,5,17,8
+2026-01-22,Línea B - Prensa Hidráulica,tarde,246,520,33,148,8
+2026-01-22,Línea C - Soldadura,tarde,388,520,16,57,8
+2026-01-23,Línea A - Torno CNC,manana,491,520,14,7,8
+2026-01-23,Línea B - Prensa Hidráulica,manana,244,520,59,80,8
+2026-01-23,Línea C - Soldadura,manana,389,520,34,32,8
+2026-01-23,Línea A - Torno CNC,tarde,459,520,3,11,8
+2026-01-23,Línea B - Prensa Hidráulica,tarde,251,520,25,146,8
+2026-01-23,Línea C - Soldadura,tarde,348,520,24,46,8
+2026-01-26,Línea A - Torno CNC,manana,481,520,4,29,8
+2026-01-26,Línea B - Prensa Hidráulica,manana,258,520,29,114,8
+2026-01-26,Línea C - Soldadura,manana,384,520,22,45,8
+2026-01-26,Línea A - Torno CNC,tarde,454,520,10,25,8
+2026-01-26,Línea B - Prensa Hidráulica,tarde,307,520,26,161,8
+2026-01-26,Línea C - Soldadura,tarde,337,520,26,53,8
+2026-01-27,Línea A - Torno CNC,manana,464,520,7,18,8
+2026-01-27,Línea B - Prensa Hidráulica,manana,240,520,35,126,8
+2026-01-27,Línea C - Soldadura,manana,387,520,21,57,8
+2026-01-27,Línea A - Torno CNC,tarde,464,520,13,25,8
+2026-01-27,Línea B - Prensa Hidráulica,tarde,230,520,35,123,8
+2026-01-27,Línea C - Soldadura,tarde,393,520,27,46,8
+2026-01-28,Línea A - Torno CNC,manana,479,520,7,24,8
+2026-01-28,Línea B - Prensa Hidráulica,manana,247,520,40,134,8
+2026-01-28,Línea C - Soldadura,manana,398,520,35,63,8
+2026-01-28,Línea A - Torno CNC,tarde,460,520,12,17,8
+2026-01-28,Línea B - Prensa Hidráulica,tarde,263,520,41,105,8
+2026-01-28,Línea C - Soldadura,tarde,393,520,20,74,8
+2026-01-29,Línea A - Torno CNC,manana,444,520,5,29,8
+2026-01-29,Línea B - Prensa Hidráulica,manana,276,520,52,121,8
+2026-01-29,Línea C - Soldadura,manana,379,520,19,46,8
+2026-01-29,Línea A - Torno CNC,tarde,449,520,13,18,8
+2026-01-29,Línea B - Prensa Hidráulica,tarde,227,520,39,115,8
+2026-01-29,Línea C - Soldadura,tarde,367,520,20,48,8
+2026-01-30,Línea A - Torno CNC,manana,463,520,7,16,8
+2026-01-30,Línea B - Prensa Hidráulica,manana,257,520,23,63,8
+2026-01-30,Línea C - Soldadura,manana,364,520,26,49,8
+2026-01-30,Línea A - Torno CNC,tarde,482,520,13,18,8
+2026-01-30,Línea B - Prensa Hidráulica,tarde,249,520,30,103,8
+2026-01-30,Línea C - Soldadura,tarde,373,520,30,33,8
+2026-02-02,Línea A - Torno CNC,manana,467,520,16,19,8
+2026-02-02,Línea B - Prensa Hidráulica,manana,260,520,53,93,8
+2026-02-02,Línea C - Soldadura,manana,384,520,28,46,8
+2026-02-02,Línea A - Torno CNC,tarde,448,520,10,23,8
+2026-02-02,Línea B - Prensa Hidráulica,tarde,292,520,57,167,8
+2026-02-02,Línea C - Soldadura,tarde,363,520,35,47,8
+2026-02-03,Línea A - Torno CNC,manana,492,520,6,13,8
+2026-02-03,Línea B - Prensa Hidráulica,manana,228,520,18,90,8
+2026-02-03,Línea C - Soldadura,manana,363,520,29,49,8
+2026-02-03,Línea A - Torno CNC,tarde,488,520,13,15,8
+2026-02-03,Línea B - Prensa Hidráulica,tarde,220,520,51,66,8
+2026-02-03,Línea C - Soldadura,tarde,420,520,38,38,8
+2026-02-04,Línea A - Torno CNC,manana,434,520,15,19,8
+2026-02-04,Línea B - Prensa Hidráulica,manana,281,520,22,88,8
+2026-02-04,Línea C - Soldadura,manana,380,520,28,38,8
+2026-02-04,Línea A - Torno CNC,tarde,469,520,5,18,8
+2026-02-04,Línea B - Prensa Hidráulica,tarde,248,520,52,127,8
+2026-02-04,Línea C - Soldadura,tarde,355,520,14,62,8
+2026-02-05,Línea A - Torno CNC,manana,464,520,7,32,8
+2026-02-05,Línea B - Prensa Hidráulica,manana,246,520,62,109,8
+2026-02-05,Línea C - Soldadura,manana,425,520,43,41,8
+2026-02-05,Línea A - Torno CNC,tarde,474,520,12,30,8
+2026-02-05,Línea B - Prensa Hidráulica,tarde,215,520,55,138,8
+2026-02-05,Línea C - Soldadura,tarde,341,520,17,18,8
+2026-02-06,Línea A - Torno CNC,manana,455,520,12,32,8
+2026-02-06,Línea B - Prensa Hidráulica,manana,243,520,69,66,8
+2026-02-06,Línea C - Soldadura,manana,342,520,27,50,8
+2026-02-06,Línea A - Torno CNC,tarde,459,520,3,19,8
+2026-02-06,Línea B - Prensa Hidráulica,tarde,203,520,55,118,8
+2026-02-06,Línea C - Soldadura,tarde,359,520,23,30,8
+2026-02-09,Línea A - Torno CNC,manana,459,520,13,12,8
+2026-02-09,Línea B - Prensa Hidráulica,manana,254,520,38,84,8
+2026-02-09,Línea C - Soldadura,manana,377,520,18,37,8
+2026-02-09,Línea A - Torno CNC,tarde,442,520,17,20,8
+2026-02-09,Línea B - Prensa Hidráulica,tarde,219,520,130,105,8
+2026-02-09,Línea C - Soldadura,tarde,375,520,21,53,8
+2026-02-10,Línea A - Torno CNC,manana,451,520,5,38,8
+2026-02-10,Línea B - Prensa Hidráulica,manana,109,520,37,254,8
+2026-02-10,Línea C - Soldadura,manana,392,520,30,88,8
+2026-02-10,Línea A - Torno CNC,tarde,476,520,9,12,8
+2026-02-10,Línea B - Prensa Hidráulica,tarde,192,520,92,86,8
+2026-02-10,Línea C - Soldadura,tarde,348,520,18,35,8
+2026-02-11,Línea A - Torno CNC,manana,448,520,8,21,8
+2026-02-11,Línea B - Prensa Hidráulica,manana,262,520,62,130,8
+2026-02-11,Línea C - Soldadura,manana,360,520,27,78,8
+2026-02-11,Línea A - Torno CNC,tarde,475,520,8,32,8
+2026-02-11,Línea B - Prensa Hidráulica,tarde,225,520,36,152,8
+2026-02-11,Línea C - Soldadura,tarde,351,520,10,58,8
+2026-02-12,Línea A - Torno CNC,manana,460,520,10,17,8
+2026-02-12,Línea B - Prensa Hidráulica,manana,228,520,40,91,8
+2026-02-12,Línea C - Soldadura,manana,371,520,24,33,8
+2026-02-12,Línea A - Torno CNC,tarde,451,520,3,25,8
+2026-02-12,Línea B - Prensa Hidráulica,tarde,246,520,104,118,8
+2026-02-12,Línea C - Soldadura,tarde,386,520,32,31,8
+2026-02-13,Línea A - Torno CNC,manana,461,520,13,6,8
+2026-02-13,Línea B - Prensa Hidráulica,manana,248,520,37,129,8
+2026-02-13,Línea C - Soldadura,manana,363,520,11,22,8
+2026-02-13,Línea A - Torno CNC,tarde,460,520,11,12,8
+2026-02-13,Línea B - Prensa Hidráulica,tarde,251,520,22,109,8
+2026-02-13,Línea C - Soldadura,tarde,353,520,22,45,8
+2026-02-16,Línea A - Torno CNC,manana,447,520,8,28,8
+2026-02-16,Línea B - Prensa Hidráulica,manana,215,520,60,77,8
+2026-02-16,Línea C - Soldadura,manana,391,520,40,18,8
+2026-02-16,Línea A - Torno CNC,tarde,448,520,12,18,8
+2026-02-16,Línea B - Prensa Hidráulica,tarde,242,520,38,115,8
+2026-02-16,Línea C - Soldadura,tarde,376,520,38,48,8
+2026-02-17,Línea A - Torno CNC,manana,465,520,8,16,8
+2026-02-17,Línea B - Prensa Hidráulica,manana,218,520,53,100,8
+2026-02-17,Línea C - Soldadura,manana,386,520,46,57,8
+2026-02-17,Línea A - Torno CNC,tarde,455,520,14,16,8
+2026-02-17,Línea B - Prensa Hidráulica,tarde,173,520,32,54,8
+2026-02-17,Línea C - Soldadura,tarde,372,520,28,68,8
+2026-02-18,Línea A - Torno CNC,manana,464,520,9,26,8
+2026-02-18,Línea B - Prensa Hidráulica,manana,90,520,51,217,8
+2026-02-18,Línea C - Soldadura,manana,383,520,33,32,8
+2026-02-18,Línea A - Torno CNC,tarde,453,520,12,29,8
+2026-02-18,Línea B - Prensa Hidráulica,tarde,255,520,49,98,8
+2026-02-18,Línea C - Soldadura,tarde,388,520,18,33,8
+2026-02-19,Línea A - Torno CNC,manana,482,520,11,17,8
+2026-02-19,Línea B - Prensa Hidráulica,manana,250,520,68,100,8
+2026-02-19,Línea C - Soldadura,manana,370,520,23,58,8
+2026-02-19,Línea A - Torno CNC,tarde,474,520,15,28,8
+2026-02-19,Línea B - Prensa Hidráulica,tarde,182,520,52,81,8
+2026-02-19,Línea C - Soldadura,tarde,368,520,29,56,8
+2026-02-20,Línea A - Torno CNC,manana,446,520,3,21,8
+2026-02-20,Línea B - Prensa Hidráulica,manana,298,520,45,117,8
+2026-02-20,Línea C - Soldadura,manana,419,520,33,48,8
+2026-02-20,Línea A - Torno CNC,tarde,466,520,11,10,8
+2026-02-20,Línea B - Prensa Hidráulica,tarde,189,520,77,121,8
+2026-02-20,Línea C - Soldadura,tarde,382,520,27,55,8
+2026-02-23,Línea A - Torno CNC,manana,495,520,12,15,8
+2026-02-23,Línea B - Prensa Hidráulica,manana,220,520,65,97,8
+2026-02-23,Línea C - Soldadura,manana,398,520,10,41,8
+2026-02-23,Línea A - Torno CNC,tarde,469,520,15,13,8
+2026-02-23,Línea B - Prensa Hidráulica,tarde,183,520,45,79,8
+2026-02-23,Línea C - Soldadura,tarde,376,520,27,26,8
+2026-02-24,Línea A - Torno CNC,manana,472,520,9,28,8
+2026-02-24,Línea B - Prensa Hidráulica,manana,173,520,33,133,8
+2026-02-24,Línea C - Soldadura,manana,362,520,26,45,8
+2026-02-24,Línea A - Torno CNC,tarde,462,520,7,21,8
+2026-02-24,Línea B - Prensa Hidráulica,tarde,202,520,59,113,8
+2026-02-24,Línea C - Soldadura,tarde,383,520,51,29,8
+2026-02-25,Línea A - Torno CNC,manana,480,520,3,5,8
+2026-02-25,Línea B - Prensa Hidráulica,manana,188,520,31,124,8
+2026-02-25,Línea C - Soldadura,manana,386,520,25,42,8
+2026-02-25,Línea A - Torno CNC,tarde,467,520,13,9,8
+2026-02-25,Línea B - Prensa Hidráulica,tarde,211,520,48,133,8
+2026-02-25,Línea C - Soldadura,tarde,363,520,27,45,8
+2026-02-26,Línea A - Torno CNC,manana,449,520,7,20,8
+2026-02-26,Línea B - Prensa Hidráulica,manana,216,520,57,83,8
+2026-02-26,Línea C - Soldadura,manana,372,520,25,56,8
+2026-02-26,Línea A - Torno CNC,tarde,445,520,10,22,8
+2026-02-26,Línea B - Prensa Hidráulica,tarde,264,520,34,96,8
+2026-02-26,Línea C - Soldadura,tarde,359,520,12,69,8
+2026-02-27,Línea A - Torno CNC,manana,441,520,6,30,8
+2026-02-27,Línea B - Prensa Hidráulica,manana,90,520,62,234,8
+2026-02-27,Línea C - Soldadura,manana,334,520,43,47,8
+2026-02-27,Línea A - Torno CNC,tarde,458,520,7,23,8
+2026-02-27,Línea B - Prensa Hidráulica,tarde,217,520,67,123,8
+2026-02-27,Línea C - Soldadura,tarde,383,520,24,44,8
+2026-03-02,Línea A - Torno CNC,manana,464,520,3,9,8
+2026-03-02,Línea B - Prensa Hidráulica,manana,117,520,53,269,8
+2026-03-02,Línea C - Soldadura,manana,351,520,28,22,8
+2026-03-02,Línea A - Torno CNC,tarde,468,520,18,25,8
+2026-03-02,Línea B - Prensa Hidráulica,tarde,205,520,59,174,8
+2026-03-02,Línea C - Soldadura,tarde,414,520,18,52,8
+2026-03-03,Línea A - Torno CNC,manana,457,520,13,23,8
+2026-03-03,Línea B - Prensa Hidráulica,manana,170,520,45,127,8
+2026-03-03,Línea C - Soldadura,manana,348,520,33,23,8
+2026-03-03,Línea A - Torno CNC,tarde,448,520,15,12,8
+2026-03-03,Línea B - Prensa Hidráulica,tarde,231,520,22,175,8
+2026-03-03,Línea C - Soldadura,tarde,373,520,28,47,8
+2026-03-04,Línea A - Torno CNC,manana,469,520,3,19,8
+2026-03-04,Línea B - Prensa Hidráulica,manana,90,520,23,256,8
+2026-03-04,Línea C - Soldadura,manana,379,520,43,36,8
+2026-03-04,Línea A - Torno CNC,tarde,487,520,12,15,8
+2026-03-04,Línea B - Prensa Hidráulica,tarde,231,520,67,142,8
+2026-03-04,Línea C - Soldadura,tarde,345,520,21,41,8
+2026-03-05,Línea A - Torno CNC,manana,458,520,12,21,8
+2026-03-05,Línea B - Prensa Hidráulica,manana,179,520,57,142,8
+2026-03-05,Línea C - Soldadura,manana,392,520,37,56,8
+2026-03-05,Línea A - Torno CNC,tarde,466,520,9,6,8
+2026-03-05,Línea B - Prensa Hidráulica,tarde,224,520,55,131,8
+2026-03-05,Línea C - Soldadura,tarde,351,520,18,59,8
+2026-03-06,Línea A - Torno CNC,manana,459,520,12,20,8
+2026-03-06,Línea B - Prensa Hidráulica,manana,212,520,67,105,8
+2026-03-06,Línea C - Soldadura,manana,382,520,23,38,8
+2026-03-06,Línea A - Torno CNC,tarde,455,520,10,16,8
+2026-03-06,Línea B - Prensa Hidráulica,tarde,244,520,37,116,8
+2026-03-06,Línea C - Soldadura,tarde,370,520,41,47,8
+2026-03-09,Línea A - Torno CNC,manana,475,520,4,22,8
+2026-03-09,Línea B - Prensa Hidráulica,manana,233,520,53,160,8
+2026-03-09,Línea C - Soldadura,manana,368,520,40,77,8
+2026-03-09,Línea A - Torno CNC,tarde,454,520,8,31,8
+2026-03-09,Línea B - Prensa Hidráulica,tarde,251,520,43,109,8
+2026-03-09,Línea C - Soldadura,tarde,373,520,15,32,8
+2026-03-10,Línea A - Torno CNC,manana,444,520,6,19,8
+2026-03-10,Línea B - Prensa Hidráulica,manana,215,520,78,89,8
+2026-03-10,Línea C - Soldadura,manana,401,520,26,44,8
+2026-03-10,Línea A - Torno CNC,tarde,470,520,5,23,8
+2026-03-10,Línea B - Prensa Hidráulica,tarde,213,520,60,134,8
+2026-03-10,Línea C - Soldadura,tarde,430,520,22,37,8
+2026-03-11,Línea A - Torno CNC,manana,450,520,7,14,8
+2026-03-11,Línea B - Prensa Hidráulica,manana,238,520,76,105,8
+2026-03-11,Línea C - Soldadura,manana,361,520,32,37,8
+2026-03-11,Línea A - Torno CNC,tarde,469,520,10,7,8
+2026-03-11,Línea B - Prensa Hidráulica,tarde,247,520,80,103,8
+2026-03-11,Línea C - Soldadura,tarde,371,520,30,49,8
+2026-03-12,Línea A - Torno CNC,manana,469,520,18,18,8
+2026-03-12,Línea B - Prensa Hidráulica,manana,187,520,30,100,8
+2026-03-12,Línea C - Soldadura,manana,379,520,44,37,8
+2026-03-12,Línea A - Torno CNC,tarde,463,520,9,29,8
+2026-03-12,Línea B - Prensa Hidráulica,tarde,270,520,44,108,8
+2026-03-12,Línea C - Soldadura,tarde,402,520,34,70,8
+2026-03-13,Línea A - Torno CNC,manana,468,520,8,24,8
+2026-03-13,Línea B - Prensa Hidráulica,manana,233,520,67,144,8
+2026-03-13,Línea C - Soldadura,manana,403,520,38,64,8
+2026-03-13,Línea A - Torno CNC,tarde,469,520,9,21,8
+2026-03-13,Línea B - Prensa Hidráulica,tarde,235,520,39,139,8
+2026-03-13,Línea C - Soldadura,tarde,371,520,28,62,8
+2026-03-16,Línea A - Torno CNC,manana,462,520,10,9,8
+2026-03-16,Línea B - Prensa Hidráulica,manana,223,520,64,175,8
+2026-03-16,Línea C - Soldadura,manana,373,520,29,48,8
+2026-03-16,Línea A - Torno CNC,tarde,483,520,9,22,8
+2026-03-16,Línea B - Prensa Hidráulica,tarde,219,520,57,111,8
+2026-03-16,Línea C - Soldadura,tarde,384,520,37,30,8
+2026-03-17,Línea A - Torno CNC,manana,461,520,7,29,8
+2026-03-17,Línea B - Prensa Hidráulica,manana,170,520,44,141,8
+2026-03-17,Línea C - Soldadura,manana,414,520,27,37,8
+2026-03-17,Línea A - Torno CNC,tarde,488,520,4,5,8
+2026-03-17,Línea B - Prensa Hidráulica,tarde,214,520,45,91,8
+2026-03-17,Línea C - Soldadura,tarde,395,520,30,37,8
+2026-03-18,Línea A - Torno CNC,manana,440,520,13,25,8
+2026-03-18,Línea B - Prensa Hidráulica,manana,199,520,80,90,8
+2026-03-18,Línea C - Soldadura,manana,346,520,21,44,8
+2026-03-18,Línea A - Torno CNC,tarde,463,520,9,22,8
+2026-03-18,Línea B - Prensa Hidráulica,tarde,171,520,79,126,8
+2026-03-18,Línea C - Soldadura,tarde,404,520,31,51,8
+2026-03-19,Línea A - Torno CNC,manana,468,520,11,25,8
+2026-03-19,Línea B - Prensa Hidráulica,manana,233,520,58,155,8
+2026-03-19,Línea C - Soldadura,manana,378,520,40,35,8
+2026-03-19,Línea A - Torno CNC,tarde,487,520,9,8,8
+2026-03-19,Línea B - Prensa Hidráulica,tarde,204,520,43,160,8
+2026-03-19,Línea C - Soldadura,tarde,365,520,23,18,8
+2026-03-20,Línea A - Torno CNC,manana,453,520,3,7,8
+2026-03-20,Línea B - Prensa Hidráulica,manana,218,520,68,145,8
+2026-03-20,Línea C - Soldadura,manana,358,520,27,44,8
+2026-03-20,Línea A - Torno CNC,tarde,442,520,16,27,8
+2026-03-20,Línea B - Prensa Hidráulica,tarde,194,520,96,138,8
+2026-03-20,Línea C - Soldadura,tarde,335,520,25,43,8
+2026-03-23,Línea A - Torno CNC,manana,457,520,7,21,8
+2026-03-23,Línea B - Prensa Hidráulica,manana,173,520,72,153,8
+2026-03-23,Línea C - Soldadura,manana,369,520,23,48,8
+2026-03-23,Línea A - Torno CNC,tarde,448,520,17,22,8
+2026-03-23,Línea B - Prensa Hidráulica,tarde,208,520,67,110,8
+2026-03-23,Línea C - Soldadura,tarde,403,520,29,58,8
+2026-03-24,Línea A - Torno CNC,manana,457,520,15,23,8
+2026-03-24,Línea B - Prensa Hidráulica,manana,249,520,49,139,8
+2026-03-24,Línea C - Soldadura,manana,357,520,23,53,8
+2026-03-24,Línea A - Torno CNC,tarde,476,520,21,19,8
+2026-03-24,Línea B - Prensa Hidráulica,tarde,175,520,68,90,8
+2026-03-24,Línea C - Soldadura,tarde,392,520,23,47,8
+2026-03-25,Línea A - Torno CNC,manana,476,520,9,27,8
+2026-03-25,Línea B - Prensa Hidráulica,manana,217,520,23,99,8
+2026-03-25,Línea C - Soldadura,manana,345,520,46,43,8
+2026-03-25,Línea A - Torno CNC,tarde,486,520,3,15,8
+2026-03-25,Línea B - Prensa Hidráulica,tarde,215,520,59,152,8
+2026-03-25,Línea C - Soldadura,tarde,352,520,40,55,8
+2026-03-26,Línea A - Torno CNC,manana,466,520,7,22,8
+2026-03-26,Línea B - Prensa Hidráulica,manana,188,520,26,131,8
+2026-03-26,Línea C - Soldadura,manana,376,520,37,18,8
+2026-03-26,Línea A - Torno CNC,tarde,463,520,5,22,8
+2026-03-26,Línea B - Prensa Hidráulica,tarde,204,520,54,163,8
+2026-03-26,Línea C - Soldadura,tarde,352,520,37,35,8
+2026-03-27,Línea A - Torno CNC,manana,436,520,8,5,8
+2026-03-27,Línea B - Prensa Hidráulica,manana,200,520,52,175,8
+2026-03-27,Línea C - Soldadura,manana,394,520,15,33,8
+2026-03-27,Línea A - Torno CNC,tarde,467,520,13,29,8
+2026-03-27,Línea B - Prensa Hidráulica,tarde,222,520,55,147,8
+2026-03-27,Línea C - Soldadura,tarde,408,520,25,50,8
