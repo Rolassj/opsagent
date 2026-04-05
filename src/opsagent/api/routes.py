@@ -168,7 +168,12 @@ async def download_diagnose_pdf(
         result = _diagnose_store[diagnose_id]
 
     data = result.model_dump() if hasattr(result, "model_dump") else result
-    pdf_bytes = generate_pdf(data, filename=data.get("filename", ""))
+
+    try:
+        pdf_bytes = generate_pdf(data, filename=data.get("filename", ""))
+    except Exception as e:
+        logger.error("Error al generar PDF para diagnostico %s: %s", diagnose_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error al generar PDF: {str(e)}")
 
     return Response(
         content=pdf_bytes,

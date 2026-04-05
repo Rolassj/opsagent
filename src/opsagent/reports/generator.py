@@ -5,7 +5,9 @@ con resumen ejecutivo, KPIs, anomalias y recomendaciones priorizadas.
 """
 
 import io
+import re
 from datetime import datetime
+from html import escape
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -94,6 +96,52 @@ def _build_styles() -> dict:
     return styles
 
 
+# ── Sanitización de texto para ReportLab ────────────────────────────────
+
+
+def _sanitize_text_for_reportlab(text: str) -> str:
+    """Sanitizar texto para ReportLab: convertir markdown bold/italic a HTML válido.
+
+    ReportLab usa un subconjunto de HTML que requiere tags bien formados.
+    Esta función:
+    1. Escapa caracteres especiales XML (&, <, >, ")
+    2. Convierte markdown bold (**texto**) a <b>texto</b>
+    3. Convierte markdown italic (*texto*) a <i>texto</i>
+    4. Cierra cualquier tag abierto sin cerrar
+
+    Args:
+        text: Texto con posible markdown y caracteres especiales
+
+    Returns:
+        Texto sanitizado y HTML-válido para ReportLab
+    """
+    if not text:
+        return ""
+
+    # Escape de caracteres especiales XML (& debe ir primero)
+    text = escape(text, quote=True)
+
+    # Convertir markdown bold (**texto**) a HTML bold (<b>texto</b>)
+    # Usar regex non-greedy para emparejar pares correctos
+    text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
+
+    # Convertir markdown italic (*texto*) a HTML italic (<i>texto</i>)
+    # Pero evitar conflictos con **
+    text = re.sub(r'(?<!\*)\*([^*]+?)\*(?!\*)', r'<i>\1</i>', text)
+
+    # Validación: cerrar cualquier tag abierto sin cerrar
+    # Contar tags abiertos y cerrados
+    open_b = text.count('<b>') - text.count('</b>')
+    open_i = text.count('<i>') - text.count('</i>')
+
+    if open_b > 0:
+        text += '</b>' * open_b
+    if open_i > 0:
+        text += '</i>' * open_i
+
+    return text
+
+
 # ── Generador principal ──────────────────────────────────────────────────
 
 
@@ -110,6 +158,14 @@ def generate_pdf(diagnosis_data: dict, filename: str = "") -> bytes:
     Returns:
         Bytes del PDF generado, listo para descargar o guardar.
     """
+    # Convertir diagnosis_data a dict plano si contiene objetos Pydantic
+    if hasattr(diagnosis_data, 'model_dump'):
+        diagnosis_data = diagnosis_data.model_dump()
+    elif hasattr(diagnosis_data, '__dict__'):
+        # Fallback para otros tipos de objetos
+        import json
+        diagnosis_data = json.loads(json.dumps(diagnosis_data, default=str))
+
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -128,11 +184,11 @@ def generate_pdf(diagnosis_data: dict, filename: str = "") -> bytes:
 
     meta_parts = []
     if filename:
-        meta_parts.append(f"Archivo: {filename}")
-    domain = diagnosis_data.get("detected_domain", "desconocido")
+        meta_parts.append(f"Archivo: {str(filename)}")
+    domain = str(diagnosis_data.get("detected_domain", "desconocido"))
     meta_parts.append(f"Dominio: {domain.title()}")
     meta_parts.append(f"Fecha: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
-    processing_time = diagnosis_data.get("processing_time_seconds", 0)
+    processing_time = float(diagnosis_data.get("processing_time_seconds", 0) or 0)
     if processing_time:
         meta_parts.append(f"Tiempo de procesamiento: {processing_time:.1f}s")
     elements.append(Paragraph(" | ".join(meta_parts), styles["subtitle"]))
@@ -141,15 +197,21 @@ def generate_pdf(diagnosis_data: dict, filename: str = "") -> bytes:
     elements.append(Spacer(1, 4 * mm))
 
     # ── Resumen Ejecutivo ────────────────────────────────────────────
-    summary = diagnosis_data.get("executive_summary", "")
-    if summary:
+    summary = str(diagnosis_data.get("executive_summary", ""))
+    if summary and summary.strip():
         elements.append(Paragraph("Resumen Ejecutivo", styles["heading"]))
-        elements.append(Paragraph(summary, styles["summary_box"]))
+        elements.append(Paragraph(_sanitize_text_for_reportlab(summary), styles["summary_box"]))
 
     # ── KPIs ─────────────────────────────────────────────────────────
-    kpis = diagnosis_data.get("kpis", {})
+    kpis = diagnosis_data.get("kpis", {}) or {}
     if kpis:
         elements.append(Paragraph("KPIs", styles["heading"]))
+
+        # Convertir kpis a dict si es un objeto Pydantic
+        if hasattr(kpis, 'model_dump'):
+            kpis = kpis.model_dump()
+        if not isinstance(kpis, dict):
+            kpis = {}
 
         # Separar KPIs simples de compuestos
         simple = {k: v for k, v in kpis.items() if not isinstance(v, dict)}
@@ -207,9 +269,15 @@ def generate_pdf(diagnosis_data: dict, filename: str = "") -> bytes:
 
         anom_data = [["Severidad", "Campo", "Detalle"]]
         for a in anomalies:
-            sev = a.get("severidad", "baja").upper()
-            campo = a.get("campo", "")
-            detalle = a.get("detalle", "")
+            # Convertir dict si es necesario
+            if hasattr(a, 'model_dump'):
+                a = a.model_dump()
+            elif not isinstance(a, dict):
+                continue
+
+            sev = str(a.get("severidad", "baja")).upper()
+            campo = str(a.get("campo", ""))
+            detalle = _sanitize_text_for_reportlab(str(a.get("detalle", "")))
             anom_data.append([sev, campo, Paragraph(detalle, styles["body"])])
 
         t = Table(anom_data, colWidths=[25 * mm, 35 * mm, 100 * mm])
@@ -225,24 +293,35 @@ def generate_pdf(diagnosis_data: dict, filename: str = "") -> bytes:
         ]))
 
         # Color de fondo por severidad
-        for i, a in enumerate(anomalies, start=1):
-            sev = a.get("severidad", "baja")
-            bg = _SEVERITY_COLORS.get(sev, colors.white)
-            t.setStyle(TableStyle([
-                ("TEXTCOLOR", (0, i), (0, i), bg),
-                ("FONTNAME", (0, i), (0, i), "Helvetica-Bold"),
-            ]))
+        if len(anom_data) > 1:
+            for i, a in enumerate(anomalies, start=1):
+                # Convertir dict si es necesario
+                if hasattr(a, 'model_dump'):
+                    a = a.model_dump()
+                if isinstance(a, dict):
+                    sev = str(a.get("severidad", "baja"))
+                    bg = _SEVERITY_COLORS.get(sev, colors.white)
+                    t.setStyle(TableStyle([
+                        ("TEXTCOLOR", (0, i), (0, i), bg),
+                        ("FONTNAME", (0, i), (0, i), "Helvetica-Bold"),
+                    ]))
 
-        elements.append(t)
+            elements.append(t)
 
     # ── Tendencias ───────────────────────────────────────────────────
     trends = diagnosis_data.get("trends", [])
     if trends:
         elements.append(Paragraph(f"Tendencias ({len(trends)})", styles["heading"]))
-        for t in trends:
-            direction = t.get("direccion", "estable")
-            metric = t.get("metrica", "?")
-            magnitude = t.get("magnitud", 0)
+        for trend_item in trends:
+            # Convertir dict si es necesario
+            if hasattr(trend_item, 'model_dump'):
+                trend_item = trend_item.model_dump()
+            elif not isinstance(trend_item, dict):
+                continue
+
+            direction = str(trend_item.get("direccion", "estable"))
+            metric = str(trend_item.get("metrica", "?"))
+            magnitude = float(trend_item.get("magnitud", 0))
             arrow = "↑" if direction == "ascendente" else "↓" if direction == "descendente" else "→"
             elements.append(Paragraph(
                 f"{arrow} <b>{metric.replace('_', ' ').title()}</b>: {direction} ({magnitude:.1%})",
@@ -250,14 +329,14 @@ def generate_pdf(diagnosis_data: dict, filename: str = "") -> bytes:
             ))
 
     # ── Diagnostico Completo ─────────────────────────────────────────
-    diag_text = diagnosis_data.get("diagnosis", "")
-    if diag_text:
+    diag_text = str(diagnosis_data.get("diagnosis", ""))
+    if diag_text and diag_text.strip():
         elements.append(Paragraph("Diagnostico Completo", styles["heading"]))
         for paragraph in diag_text.split("\n\n"):
             paragraph = paragraph.strip()
             if paragraph:
-                # Clean markdown bold
-                paragraph = paragraph.replace("**", "<b>").replace("</b><b>", "")
+                # Sanitizar markdown y caracteres especiales
+                paragraph = _sanitize_text_for_reportlab(paragraph)
                 elements.append(Paragraph(paragraph, styles["body"]))
 
     # ── Recomendaciones ──────────────────────────────────────────────
@@ -268,10 +347,16 @@ def generate_pdf(diagnosis_data: dict, filename: str = "") -> bytes:
         ))
 
         for rec in recommendations:
-            priority = rec.get("prioridad", 0)
-            action = rec.get("accion", "")
-            impact = rec.get("impacto", "")
-            timeline = rec.get("plazo", "")
+            # Convertir dict si es necesario
+            if hasattr(rec, 'model_dump'):
+                rec = rec.model_dump()
+            elif not isinstance(rec, dict):
+                continue  # Saltar si no es dict o Pydantic model
+
+            priority = int(rec.get("prioridad", 0))
+            action = _sanitize_text_for_reportlab(str(rec.get("accion", "")))
+            impact = _sanitize_text_for_reportlab(str(rec.get("impacto", "")))
+            timeline = _sanitize_text_for_reportlab(str(rec.get("plazo", "")))
 
             elements.append(Paragraph(
                 f"#{priority} — {action}", styles["rec_title"],
@@ -282,20 +367,28 @@ def generate_pdf(diagnosis_data: dict, filename: str = "") -> bytes:
             elements.append(Spacer(1, 2 * mm))
 
     # ── Calidad de datos ─────────────────────────────────────────────
-    quality = diagnosis_data.get("data_quality_report", {})
+    quality = diagnosis_data.get("data_quality_report", {}) or {}
     if quality:
-        elements.append(Paragraph("Calidad de Datos", styles["heading"]))
-        orig = quality.get("filas_originales", "?")
-        valid = quality.get("filas_validas", "?")
-        removed = quality.get("filas_eliminadas", 0)
-        elements.append(Paragraph(
-            f"Filas originales: {orig} | Filas validas: {valid} | Eliminadas: {removed}",
-            styles["body"],
-        ))
-        problems = quality.get("problemas", [])
-        if problems:
-            for p in problems:
-                elements.append(Paragraph(f"• {p}", styles["body"]))
+        # Convertir quality a dict si es un objeto Pydantic
+        if hasattr(quality, 'model_dump'):
+            quality = quality.model_dump()
+        if not isinstance(quality, dict):
+            quality = {}
+
+        if quality:  # Verificar nuevamente después de conversión
+            elements.append(Paragraph("Calidad de Datos", styles["heading"]))
+            orig = quality.get("filas_originales", "?")
+            valid = quality.get("filas_validas", "?")
+            removed = quality.get("filas_eliminadas", 0)
+            elements.append(Paragraph(
+                f"Filas originales: {orig} | Filas validas: {valid} | Eliminadas: {removed}",
+                styles["body"],
+            ))
+            problems = quality.get("problemas", [])
+            if problems:
+                for p in problems:
+                    p_safe = _sanitize_text_for_reportlab(str(p))
+                    elements.append(Paragraph(f"• {p_safe}", styles["body"]))
 
     # ── Footer ───────────────────────────────────────────────────────
     elements.append(Spacer(1, 8 * mm))
