@@ -51,10 +51,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS: en produccion, ALLOWED_ORIGINS contiene la URL del frontend Streamlit
-# Ejemplo: ALLOWED_ORIGINS=https://opsagent-frontend.up.railway.app
-_default_origins = "http://localhost:8501,http://127.0.0.1:8501"
-_allowed_origins = os.environ.get("ALLOWED_ORIGINS", _default_origins).split(",")
+# CORS: permitir desde cualquier origen (para landing page embebida)
+# En produccion se puede restringir a dominios específicos
+_allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://localhost:8501",
+    "http://127.0.0.1:8501",
+    "https://opsagent-sigma.vercel.app",
+    "https://opsagent.vercel.app",
+]
+
+# Agregar desde variable de entorno si existe
+if os.environ.get("ALLOWED_ORIGINS"):
+    _allowed_origins.extend(os.environ.get("ALLOWED_ORIGINS", "").split(","))
 
 app.add_middleware(
     CORSMiddleware,

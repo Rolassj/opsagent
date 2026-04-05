@@ -175,3 +175,49 @@ async def download_diagnose_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="diagnostico-{diagnose_id[:8]}.pdf"'},
     )
+
+
+@router.get("/sample-data")
+async def download_sample_data():
+    """Descargar archivo CSV de prueba para análisis."""
+    import os
+    # Buscar sample_data.csv en multiples ubicaciones
+    possible_paths = [
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "sample_data.csv"),  # src/opsagent/api/ -> opsagent/
+        os.path.join(os.path.dirname(__file__), "..", "..", "sample_data.csv"),  # src/opsagent/api/ -> src/
+        "/app/sample_data.csv",  # En Vercel
+    ]
+
+    sample_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            sample_path = path
+            break
+
+    # Si no encuentra, generar uno en memoria
+    if sample_path is None:
+        csv_content = b"""fecha,linea,oee,tiempo_ciclo,tasa_defectos,velocidad,paradas_no_planeadas,fill_rate,merma,eficiencia
+2025-04-01,Linea 1,82.5,12.3,2.1,95,2,94.2,1.2,88.5
+2025-04-01,Linea 2,78.3,15.6,3.4,92,3,91.8,1.8,85.2
+2025-04-02,Linea 1,85.2,11.8,1.9,97,1,95.6,0.9,91.2
+2025-04-02,Linea 2,76.1,16.4,4.2,88,4,89.5,2.3,82.1
+2025-04-03,Linea 1,88.9,10.5,1.5,99,0,97.1,0.6,93.8
+2025-04-03,Linea 2,71.4,18.2,5.1,84,5,87.2,3.1,79.5
+2025-04-04,Linea 1,80.7,13.1,2.8,94,2,93.4,1.4,87.1
+2025-04-04,Linea 2,79.2,14.9,3.6,91,3,90.9,2.0,84.6
+2025-04-05,Linea 1,86.3,12.0,2.0,96,1,94.8,1.1,90.1
+2025-04-05,Linea 2,74.5,17.1,4.7,89,4,88.3,2.7,81.3"""
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=sample_data.csv"},
+        )
+
+    with open(sample_path, "rb") as f:
+        content = f.read()
+
+    return Response(
+        content=content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=sample_data.csv"},
+    )

@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpsAgent — Diagnóstico operativo con IA para PyMEs</title>
+  <style>
+    :root {
+      --bg-primary: #050810;
+      --bg-card: #0A1228;
+      --bg-elevated: #131F3E;
+      --accent: #F97316;
+      --blue: #3B82F6;
+      --text-primary: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --text-muted: #475569;
+      --border: rgba(148, 163, 184, 0.08);
+      --success: #22C55E;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      background-image:
+        linear-gradient(0deg, rgba(148,163,184,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148,163,184,0.04) 1px, transparent 1px);
+      background-size: 80px 80px;
+      background-attachment: fixed;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse 1400px 900px at 75% -5%, rgba(249,115,22,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse 1000px 600px at -10% 85%, rgba(59,130,246,0.09) 0%, transparent 55%),
+        radial-gradient(ellipse 800px 500px at 50% 50%, rgba(249,115,22,0.04) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body > * { position: relative; z-index: 1; }
+
+    .glass {
+      background: rgba(10,18,40,0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(148,163,184,0.08);
+    }
+
+    .glass-strong {
+      background: rgba(10,18,40,0.8);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(148,163,184,0.1);
+    }
+
+    .gradient-border { position: relative; }
+    .gradient-border::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(249,115,22,0.3), transparent 50%, rgba(59,130,246,0.2));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(249,115,22,0.2) 25%, rgba(59,130,246,0.15) 75%, transparent);
+    }
+
+    /* Animations */
+    @keyframes live-pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.4; transform:scale(0.85); }
+    }
+    @keyframes ping {
+      75%,100% { transform:scale(2); opacity:0; }
+    }
+    @keyframes float-up {
+      0%,100% { transform:translateY(0); }
+      50% { transform:translateY(-8px); }
+    }
+    @keyframes float-down {
+      0%,100% { transform:translateY(0); }
+      50% { transform:translateY(8px); }
+    }
+    @keyframes scroll-dot {
+      0%,100% { transform:translateY(0); opacity:1; }
+      50% { transform:translateY(8px); opacity:0.3; }
+    }
+    @keyframes blob1 {
+      0%,100% { transform:translate(0,0) scale(1); }
+      33% { transform:translate(30px,-30px) scale(1.1); }
+      66% { transform:translate(-10px,15px) scale(0.95); }
+    }
+    @keyframes blob2 {
+      0%,100% { transform:translate(0,0) scale(1); }
+      50% { transform:translate(-20px,30px) scale(1.05); }
+    }
+    @keyframes fadeInUp {
+      from { opacity:0; transform:translateY(30px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+    @keyframes fadeInRight {
+      from { opacity:0; transform:translateX(60px); }
+      to { opacity:1; transform:translateX(0); }
+    }
+    @keyframes barGrow {
+      from { width:0; }
+    }
+
+    .animate-live { animation: live-pulse 2s ease-in-out infinite; }
+    .animate-ping { animation: ping 1s cubic-bezier(0,0,0.2,1) infinite; }
+
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background:rgba(148,163,184,0.15); border-radius:99px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(148,163,184,0.3); }
+    ::selection { background:rgba(249,115,22,0.3); color:#F1F5F9; }
+
+    /* ===== NAVBAR ===== */
+    nav {
+      position: fixed;
+      top:0; left:0; right:0;
+      z-index: 50;
+      transition: all 0.3s;
+    }
+    nav.scrolled {
+      border-bottom: 1px solid rgba(148,163,184,0.08);
+      background: rgba(10,18,40,0.85);
+      backdrop-filter: blur(30px);
+    }
+    .nav-inner { display:flex; justify-content:center; padding:0 1rem; }
+    .nav-content {
+      max-width: 1280px; width:100%;
+      display:flex; height:64px;
+      align-items:center; justify-content:space-between;
+    }
+    .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-icon {
+      width:36px; height:36px; border-radius:12px;
+      background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.25);
+      display:flex; align-items:center; justify-content:center; position:relative;
+    }
+    .logo-dot {
+      position:absolute; top:-2px; right:-2px;
+      width:8px; height:8px; border-radius:50%; background:var(--accent);
+    }
+    .logo-text { font-size:16px; font-weight:700; color:var(--text-primary); letter-spacing:-0.025em; }
+    .logo-text span { color:var(--accent); }
+    .nav-links { display:flex; gap:4px; }
+    .nav-link {
+      padding:8px 16px; border-radius:8px; font-size:14px; font-weight:500;
+      text-decoration:none; color:var(--text-muted); transition:all 0.2s;
+    }
+    .nav-link:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
+    .nav-link.active { color:var(--text-primary); background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08); }
+    .nav-right { display:flex; align-items:center; gap:12px; }
+    .status-badge {
+      display:flex; align-items:center; gap:8px;
+      border-radius:999px; padding:8px 14px;
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+    }
+    .dot-wrap { position:relative; width:6px; height:6px; }
+    .dot-ping {
+      position:absolute; inset:0; border-radius:50%;
+      background:var(--success); opacity:0.6;
+      animation:ping 1s cubic-bezier(0,0,0.2,1) infinite;
+    }
+    .dot-solid { position:relative; width:6px; height:6px; border-radius:50%; background:var(--success); }
+    .status-text { font-size:11px; font-family:monospace; color:var(--text-muted); letter-spacing:0.05em; }
+    .btn-nav {
+      display:inline-flex; align-items:center; gap:6px;
+      border-radius:12px; background:linear-gradient(to right,var(--accent),#f97316);
+      padding:10px 20px; font-size:14px; font-weight:600;
+      color:white; text-decoration:none; transition:all 0.2s; border:none; cursor:pointer;
+    }
+    .btn-nav:hover { box-shadow:0 0 25px rgba(249,115,22,0.35); }
+    @media(max-width:768px){ .nav-links,.nav-right{ display:none; } }
+
+    /* ===== HERO ===== */
+    .hero {
+      width:100%; min-height:100vh;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:112px 0 96px; position:relative; overflow:hidden;
+    }
+    .blob1 {
+      position:absolute; top:-128px; right:-128px;
+      width:600px; height:600px; background:rgba(249,115,22,0.15);
+      border-radius:50%; filter:blur(120px); pointer-events:none;
+      animation:blob1 12s ease-in-out infinite;
+    }
+    .blob2 {
+      position:absolute; bottom:-128px; left:-128px;
+      width:500px; height:500px; background:rgba(59,130,246,0.1);
+      border-radius:50%; filter:blur(120px); pointer-events:none;
+      animation:blob2 15s ease-in-out infinite;
+    }
+    .hero-inner { position:relative; z-index:10; display:flex; flex-direction:column; align-items:center; padding:0 1rem; width:100%; }
+    .hero-layout {
+      display:flex; flex-direction:column; align-items:center;
+      gap:64px; max-width:1280px; width:100%;
+    }
+    @media(min-width:1024px){ .hero-layout{ flex-direction:row; align-items:center; } }
+    .hero-text {
+      flex:1; display:flex; flex-direction:column; align-items:center;
+      text-align:center; animation:fadeInUp 0.7s ease-out both;
+    }
+    @media(min-width:1024px){ .hero-text{ align-items:flex-start; text-align:left; } }
+    .hero-badge {
+      display:inline-flex; align-items:center; gap:10px;
+      border-radius:999px; padding:10px 20px; margin-bottom:32px;
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+    }
+    .badge-dot-wrap { position:relative; width:8px; height:8px; }
+    .badge-dot-ping {
+      position:absolute; inset:0; border-radius:50%;
+      background:var(--accent); opacity:0.75;
+      animation:ping 1s cubic-bezier(0,0,0.2,1) infinite;
+    }
+    .badge-dot { position:relative; width:8px; height:8px; border-radius:50%; background:var(--accent); }
+    .badge-text { font-size:11px; font-weight:600; color:var(--accent); letter-spacing:0.1em; text-transform:uppercase; }
+    .hero-h1 {
+      font-size:clamp(2.5rem,7vw,4.5rem); font-weight:800;
+      line-height:1.08; letter-spacing:-0.025em; margin-bottom:24px;
+    }
+    .gradient-text {
+      background:linear-gradient(to right,var(--accent),#fb923c,#eab308);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .hero-subtitle { font-size:18px; color:var(--text-secondary); max-width:500px; margin-bottom:40px; line-height:1.7; }
+    .hero-ctas { display:flex; flex-direction:column; gap:12px; margin-bottom:48px; }
+    @media(min-width:640px){ .hero-ctas{ flex-direction:row; } }
+    .btn-primary-large {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      border-radius:12px; background:linear-gradient(to right,var(--accent),#f97316);
+      padding:16px 32px; font-size:16px; font-weight:600;
+      color:white; text-decoration:none; transition:all 0.3s;
+    }
+    .btn-primary-large:hover { box-shadow:0 0 40px rgba(249,115,22,0.4); }
+    .btn-ghost-large {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      border-radius:12px; padding:16px 32px; font-size:16px; font-weight:500;
+      text-decoration:none; color:var(--text-primary);
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+      transition:all 0.2s;
+    }
+    .btn-ghost-large:hover { background:rgba(255,255,255,0.1); }
+    .pipeline { display:flex; gap:12px; flex-wrap:wrap; }
+    .pipeline-step {
+      display:flex; align-items:center; gap:12px;
+      border-radius:12px; padding:12px 16px;
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+    }
+    .p-icon {
+      width:36px; height:36px; border-radius:8px;
+      background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.2);
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .p-label { font-size:12px; font-weight:600; color:var(--text-primary); line-height:1.2; }
+    .p-desc { font-size:10px; color:var(--text-muted); }
+    .p-arrow { color:rgba(148,163,184,0.3); margin-left:4px; font-size:18px; }
+
+    /* Mockup */
+    .mockup-wrap { flex-shrink:0; display:none; width:440px; animation:fadeInRight 0.9s 0.3s ease-out both; }
+    @media(min-width:1024px){ .mockup-wrap{ display:block; } }
+    .mockup-outer { position:relative; }
+    .mockup-glow {
+      position:absolute; inset:-24px;
+      background:linear-gradient(135deg,rgba(249,115,22,0.25),rgba(249,115,22,0.1),rgba(59,130,246,0.1));
+      border-radius:24px; filter:blur(48px); opacity:0.6;
+    }
+    .mockup-card {
+      position:relative; border-radius:16px; overflow:hidden;
+      box-shadow:0 25px 50px rgba(0,0,0,0.5);
+      background:rgba(10,18,40,0.8); border:1px solid rgba(148,163,184,0.1);
+    }
+    .mockup-chrome {
+      display:flex; align-items:center; gap:8px; padding:12px 16px;
+      border-bottom:1px solid rgba(148,163,184,0.08); background:rgba(19,31,62,0.5);
+    }
+    .chrome-dots { display:flex; gap:6px; }
+    .chrome-dot { width:10px; height:10px; border-radius:50%; }
+    .mockup-url {
+      flex:1; margin:0 16px; background:rgba(5,8,16,0.5);
+      border:1px solid rgba(148,163,184,0.08); border-radius:6px;
+      padding:4px 12px; font-size:10px; font-family:monospace; color:var(--text-muted); text-align:center;
+    }
+    .live-row { display:flex; align-items:center; gap:6px; }
+    .mockup-body { padding:20px; display:flex; flex-direction:column; gap:16px; }
+    .status-ok {
+      display:flex; align-items:center; gap:8px; border-radius:8px;
+      border:1px solid rgba(34,197,94,0.2); background:rgba(34,197,94,0.05); padding:8px 12px;
+    }
+    .status-ok span { font-size:11px; font-family:monospace; color:var(--success); }
+    .domain-txt { font-size:10px; font-family:monospace; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; }
+    .domain-txt span { color:var(--text-secondary); }
+    .kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .kpi-card {
+      border-radius:12px; border:1px solid rgba(148,163,184,0.08);
+      background:rgba(19,31,62,0.5); padding:12px;
+    }
+    .kpi-name { font-size:9px; color:var(--text-muted); margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .kpi-val { font-size:18px; font-weight:700; font-family:monospace; }
+    .kpi-track { margin-top:8px; height:4px; border-radius:999px; background:var(--bg-primary); overflow:hidden; }
+    .kpi-fill { height:100%; border-radius:999px; opacity:0.7; animation:barGrow 1.2s 0.8s ease-out both; }
+    .anomaly-section { display:flex; flex-direction:column; gap:6px; }
+    .anomaly-lbl { display:flex; align-items:center; gap:6px; font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); }
+    .anomaly-row {
+      display:flex; align-items:center; justify-content:space-between;
+      border-radius:8px; border:1px solid rgba(239,68,68,0.2);
+      background:rgba(239,68,68,0.05); padding:8px 12px;
+    }
+    .anomaly-name { font-size:11px; font-weight:500; color:#f87171; }
+    .anomaly-sev { font-size:9px; font-weight:700; text-transform:uppercase; color:rgba(248,113,113,0.8); }
+    .rec-card {
+      border-radius:12px; border:1px solid rgba(249,115,22,0.2);
+      background:rgba(249,115,22,0.05); padding:12px;
+      display:flex; align-items:flex-start; gap:8px;
+    }
+    .rec-title { font-size:9px; font-weight:600; color:var(--accent); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .rec-text { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+    .mockup-foot { display:flex; align-items:center; justify-content:space-between; padding-top:4px; }
+    .mockup-foot-txt { font-size:9px; font-family:monospace; color:var(--text-muted); }
+    .pdf-btn { display:flex; align-items:center; gap:6px; border-radius:8px; background:var(--accent); padding:6px 12px; }
+    .pdf-btn span { font-size:10px; font-weight:600; color:white; }
+    .float1 {
+      position:absolute; top:-20px; right:-20px;
+      border-radius:12px; padding:10px 16px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.4);
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+      animation:float-up 4s ease-in-out infinite;
+    }
+    .float2 {
+      position:absolute; bottom:-16px; left:-16px;
+      border-radius:12px; padding:10px 16px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.4);
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+      animation:float-down 5s ease-in-out 1s infinite;
+    }
+    .fl-lbl { font-size:9px; font-family:monospace; color:var(--text-muted); }
+    .fl-accent { font-size:20px; font-weight:800; font-family:monospace; color:var(--accent); }
+    .fl-success { font-size:12px; font-weight:600; color:var(--success); }
+    .scroll-ind { position:absolute; bottom:32px; left:50%; transform:translateX(-50%); }
+    .scroll-mouse {
+      width:24px; height:40px; border:2px solid rgba(148,163,184,0.3);
+      border-radius:12px; display:flex; align-items:flex-start; justify-content:center; padding:8px;
+    }
+    .scroll-dot { width:4px; height:8px; border-radius:999px; background:rgba(249,115,22,0.6); animation:scroll-dot 2.5s ease-in-out infinite; }
+
+    /* ===== STATS ===== */
+    .stats-section { width:100%; padding:80px 0; position:relative; }
+    .section-center { display:flex; justify-content:center; padding:0 1rem; }
+    .stats-card { max-width:900px; width:100%; border-radius:16px; padding:40px; }
+    .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:32px 40px; }
+    @media(min-width:768px){ .stats-grid{ grid-template-columns:repeat(4,1fr); } }
+    .stat-item { display:flex; flex-direction:column; align-items:center; text-align:center; }
+    .stat-icon-box {
+      width:40px; height:40px; border-radius:12px;
+      background:var(--bg-elevated); border:1px solid rgba(148,163,184,0.08);
+      display:flex; align-items:center; justify-content:center; margin-bottom:16px;
+    }
+    .stat-val { font-size:clamp(2rem,5vw,3rem); font-weight:800; font-family:monospace; margin-bottom:4px; }
+    .stat-lbl { font-size:14px; color:var(--text-muted); }
+    .c-accent { color:var(--accent); }
+    .c-success { color:var(--success); }
+    .c-blue { color:var(--blue); }
+    .c-purple { color:#c084fc; }
+
+    /* ===== FEATURES ===== */
+    .features-section { width:100%; padding:112px 0; position:relative; }
+    .sec-max { max-width:1152px; width:100%; }
+    .sec-header { display:flex; flex-direction:column; align-items:center; text-align:center; margin-bottom:80px; }
+    .sec-pill {
+      display:inline-flex; align-items:center; gap:8px;
+      border-radius:999px; padding:8px 16px; margin-bottom:24px;
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+    }
+    .pill-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+    .pill-txt { font-size:11px; font-weight:600; color:var(--accent); text-transform:uppercase; letter-spacing:0.1em; }
+    .sec-h2 { font-size:clamp(2rem,5vw,3.5rem); font-weight:800; line-height:1.1; letter-spacing:-0.025em; margin-bottom:20px; }
+    .sec-sub { font-size:18px; color:var(--text-secondary); max-width:600px; line-height:1.7; }
+    .bento { display:grid; grid-template-columns:1fr; gap:20px; }
+    @media(min-width:768px){ .bento{ grid-template-columns:repeat(2,1fr); } }
+    @media(min-width:1024px){ .bento{ grid-template-columns:repeat(3,1fr); } .span2{ grid-column:span 2; } }
+    .feat-card {
+      border-radius:16px; padding:28px; cursor:default; transition:all 0.3s;
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+    }
+    .feat-card:hover { border-color:rgba(148,163,184,0.16); }
+    .feat-icon {
+      width:48px; height:48px; border-radius:12px;
+      background:var(--bg-elevated); border:1px solid rgba(148,163,184,0.08);
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom:20px; transition:transform 0.2s;
+    }
+    .feat-card:hover .feat-icon { transform:scale(1.1); }
+    .feat-title { font-size:18px; font-weight:700; color:var(--text-primary); margin-bottom:8px; }
+    .feat-desc { font-size:14px; color:var(--text-secondary); line-height:1.6; }
+
+    /* ===== HOW IT WORKS ===== */
+    .how-section { width:100%; padding:112px 0; position:relative; }
+    .steps-list { display:flex; flex-direction:column; gap:24px; }
+    .step-card {
+      border-radius:16px; padding:28px; display:flex; flex-direction:column;
+      gap:24px; transition:all 0.3s;
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+    }
+    @media(min-width:640px){ .step-card{ flex-direction:row; align-items:flex-start; } }
+    .step-card:hover { border-color:rgba(249,115,22,0.2); }
+    .step-head { display:flex; align-items:center; gap:16px; flex-shrink:0; }
+    .step-num { font-size:30px; font-weight:800; font-family:monospace; color:rgba(249,115,22,0.2); transition:color 0.3s; }
+    .step-card:hover .step-num { color:rgba(249,115,22,0.4); }
+    .step-icon-big {
+      width:56px; height:56px; border-radius:16px;
+      background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.2);
+      display:flex; align-items:center; justify-content:center; transition:all 0.2s;
+    }
+    .step-card:hover .step-icon-big { background:rgba(249,115,22,0.15); transform:scale(1.1); }
+    .step-body { flex:1; }
+    .step-title { font-size:20px; font-weight:700; color:var(--text-primary); margin-bottom:8px; }
+    .step-text { font-size:14px; color:var(--text-secondary); line-height:1.6; margin-bottom:12px; }
+    .step-detail {
+      display:inline-block; border-radius:8px; background:var(--bg-elevated);
+      border:1px solid rgba(148,163,184,0.08); padding:6px 12px;
+      font-size:11px; font-family:monospace; color:var(--text-muted);
+    }
+
+    /* ===== USE CASES ===== */
+    .use-section { width:100%; padding:112px 0; position:relative; }
+    .cases-grid { display:grid; grid-template-columns:1fr; gap:24px; }
+    @media(min-width:768px){ .cases-grid{ grid-template-columns:repeat(2,1fr); } }
+    .case-card {
+      border-radius:16px; padding:28px; cursor:default; transition:all 0.3s;
+      position:relative; overflow:hidden;
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+    }
+    .case-card:hover { border-color:rgba(148,163,184,0.16); }
+    .case-line { position:absolute; top:0; left:0; right:0; height:4px; }
+    .case-head { display:flex; align-items:flex-start; gap:16px; margin-bottom:16px; }
+    .case-icon {
+      width:48px; height:48px; border-radius:12px;
+      background:var(--bg-elevated); border:1px solid rgba(148,163,184,0.08);
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; transition:transform 0.2s;
+    }
+    .case-card:hover .case-icon { transform:scale(1.1); }
+    .case-title { font-size:20px; font-weight:700; color:var(--text-primary); }
+    .case-prob { font-size:11px; color:var(--text-muted); font-family:monospace; margin-top:2px; }
+    .case-out { font-size:14px; color:var(--text-secondary); line-height:1.6; margin-bottom:20px; }
+    .kpi-tags { display:flex; flex-wrap:wrap; gap:8px; }
+    .kpi-tag {
+      font-size:11px; font-family:monospace; color:var(--text-muted);
+      background:var(--bg-elevated); border:1px solid rgba(148,163,184,0.08);
+      border-radius:8px; padding:6px 12px;
+    }
+
+    /* ===== CTA ===== */
+    .cta-section { width:100%; padding:112px 0; }
+    .cta-wrap { position:relative; border-radius:24px; overflow:hidden; max-width:900px; width:100%; }
+    .cta-bg { position:absolute; inset:0; background:linear-gradient(135deg,rgba(249,115,22,0.15),var(--bg-card),rgba(59,130,246,0.05)); }
+    .cta-glow {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      width:600px; height:300px; background:rgba(249,115,22,0.1);
+      border-radius:50%; filter:blur(100px);
+    }
+    .cta-body {
+      position:relative; padding:60px 40px; text-align:center;
+      background:rgba(10,18,40,0.8); backdrop-filter:blur(30px);
+      border:1px solid rgba(148,163,184,0.1); border-radius:24px;
+    }
+    @media(min-width:640px){ .cta-body{ padding:80px; } }
+    .cta-icon {
+      width:64px; height:64px; border-radius:16px;
+      background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.25);
+      display:flex; align-items:center; justify-content:center; margin:0 auto 32px;
+    }
+    .cta-h2 { font-size:clamp(2rem,5vw,3.5rem); font-weight:800; line-height:1.1; letter-spacing:-0.025em; margin-bottom:20px; }
+    .cta-sub { font-size:18px; color:var(--text-secondary); max-width:500px; margin:0 auto 40px; line-height:1.7; }
+    .cta-btns { display:flex; flex-direction:column; gap:16px; justify-content:center; }
+    @media(min-width:640px){ .cta-btns{ flex-direction:row; } }
+    .btn-cta {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      border-radius:12px; background:linear-gradient(to right,var(--accent),#f97316);
+      padding:20px 40px; font-size:18px; font-weight:600;
+      color:white; text-decoration:none; transition:all 0.3s;
+    }
+    .btn-cta:hover { box-shadow:0 0 60px rgba(249,115,22,0.5); }
+    .btn-cta-ghost {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      border-radius:12px; padding:20px 40px; font-size:18px; font-weight:500;
+      color:var(--text-primary); text-decoration:none;
+      background:rgba(10,18,40,0.6); border:1px solid rgba(148,163,184,0.08);
+      transition:all 0.2s;
+    }
+    .btn-cta-ghost:hover { background:rgba(255,255,255,0.1); }
+
+    /* ===== FOOTER ===== */
+    footer { width:100%; border-top:1px solid rgba(148,163,184,0.08); background:rgba(8,14,30,0.3); }
+    .footer-inner { max-width:1152px; width:100%; padding:64px 0; }
+    .footer-grid { display:grid; grid-template-columns:1fr; gap:48px; margin-bottom:48px; }
+    @media(min-width:640px){ .footer-grid{ grid-template-columns:2fr 1fr 1fr; } }
+    .footer-brand { display:flex; flex-direction:column; gap:20px; }
+    .f-logo { display:flex; align-items:center; gap:10px; }
+    .f-logo-icon {
+      width:36px; height:36px; border-radius:12px;
+      background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.25);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .f-logo-txt { font-size:18px; font-weight:700; color:var(--text-primary); }
+    .f-logo-txt span { color:var(--accent); }
+    .f-desc { font-size:14px; color:var(--text-muted); max-width:280px; line-height:1.7; }
+    .tech-tags { display:flex; flex-wrap:wrap; gap:8px; }
+    .tech-tag {
+      border-radius:8px; background:var(--bg-card);
+      border:1px solid rgba(148,163,184,0.08);
+      padding:4px 10px; font-size:10px; font-family:monospace; color:var(--text-muted);
+    }
+    .f-col-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.15em; color:var(--text-muted); margin-bottom:16px; }
+    .f-links { display:flex; flex-direction:column; gap:12px; }
+    .f-link { font-size:14px; color:var(--text-secondary); text-decoration:none; transition:color 0.2s; display:flex; align-items:center; gap:8px; }
+    .f-link:hover { color:var(--text-primary); }
+    .f-bottom {
+      padding-top:32px; border-top:1px solid rgba(148,163,184,0.05);
+      display:flex; flex-direction:column; align-items:center; gap:16px;
+    }
+    @media(min-width:640px){ .f-bottom{ flex-direction:row; justify-content:space-between; } }
+    .f-copy { font-size:11px; font-family:monospace; color:var(--text-muted); }
+    .f-ver { font-size:11px; font-family:monospace; color:var(--text-muted); }
+    .f-ver span { color:var(--accent); font-weight:600; }
+
+    svg { display:inline-block; vertical-align:middle; }
+  </style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <div class="nav-content">
+      <a href="#" class="nav-logo">
+        <div class="logo-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span class="logo-dot animate-live"></span>
+        </div>
+        <span class="logo-text">Ops<span>Agent</span></span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#" class="nav-link active">Inicio</a>
+        <a href="#diagnostico" class="nav-link">Diagnóstico</a>
+      </div>
+
+      <div class="nav-right">
+        <div class="status-badge">
+          <div class="dot-wrap">
+            <div class="dot-ping"></div>
+            <div class="dot-solid"></div>
+          </div>
+          <span class="status-text">Sistema activo</span>
+        </div>
+        <a href="#diagnostico" class="btn-nav">
+          Diagnosticar
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="blob1"></div>
+  <div class="blob2"></div>
+
+  <div class="hero-inner">
+    <div class="hero-layout">
+
+      <!-- Text -->
+      <div class="hero-text">
+        <div class="hero-badge">
+          <div class="badge-dot-wrap">
+            <div class="badge-dot-ping"></div>
+            <div class="badge-dot"></div>
+          </div>
+          <span class="badge-text">Powered by Claude AI</span>
+        </div>
+
+        <h1 class="hero-h1">
+          Diagnóstico<br>
+          operativo <span class="gradient-text">con IA</span><br>
+          para PyMEs
+        </h1>
+
+        <p class="hero-subtitle">
+          Subí tu CSV y recibí un diagnóstico completo en
+          <span style="color:var(--accent);font-weight:600;">menos de 2 minutos</span>.
+          Lean, Six Sigma y BPMN embebidos — sin complejidad.
+        </p>
+
+        <div class="hero-ctas">
+          <a href="#diagnostico" class="btn-primary-large">
+            Diagnosticar ahora
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <a href="https://github.com/Rolassj/opsagent" target="_blank" rel="noopener noreferrer" class="btn-ghost-large">
+            Ver en GitHub
+          </a>
+        </div>
+
+        <div class="pipeline">
+          <div class="pipeline-step">
+            <div class="p-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div>
+              <div class="p-label">Ingestion Agent</div>
+              <div class="p-desc">Valida y mapea columnas</div>
+            </div>
+            <span class="p-arrow">→</span>
+          </div>
+          <div class="pipeline-step">
+            <div class="p-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+            </div>
+            <div>
+              <div class="p-label">Analysis Agent</div>
+              <div class="p-desc">KPIs + anomalías</div>
+            </div>
+            <span class="p-arrow">→</span>
+          </div>
+          <div class="pipeline-step">
+            <div class="p-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <div>
+              <div class="p-label">Recommendations</div>
+              <div class="p-desc">Plan de acción Lean</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mockup -->
+      <div class="mockup-wrap">
+        <div class="mockup-outer">
+          <div class="mockup-glow"></div>
+          <div class="mockup-card">
+            <div class="mockup-chrome">
+              <div class="chrome-dots">
+                <div class="chrome-dot" style="background:rgba(239,68,68,0.7)"></div>
+                <div class="chrome-dot" style="background:rgba(234,179,8,0.7)"></div>
+                <div class="chrome-dot" style="background:rgba(34,197,94,0.7)"></div>
+              </div>
+              <div class="mockup-url">opsagent.app/diagnose</div>
+              <div class="live-row">
+                <div style="position:relative;width:6px;height:6px;">
+                  <div style="position:absolute;inset:0;border-radius:50%;background:var(--success);opacity:0.6;animation:ping 1s cubic-bezier(0,0,0.2,1) infinite;"></div>
+                  <div style="position:relative;width:6px;height:6px;border-radius:50%;background:var(--success);"></div>
+                </div>
+                <span style="font-size:10px;font-family:monospace;color:var(--text-muted);margin-left:6px;">Live</span>
+              </div>
+            </div>
+
+            <div class="mockup-body">
+              <div class="status-ok">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span>Diagnóstico completo · 16.4s</span>
+              </div>
+
+              <div class="domain-txt">Dominio: <span>Manufactura</span></div>
+
+              <div class="kpi-grid">
+                <div class="kpi-card">
+                  <div class="kpi-name">OEE</div>
+                  <div class="kpi-val" style="color:#EAB308">78.3%</div>
+                  <div class="kpi-track"><div class="kpi-fill" style="width:78%;background:#EAB308;"></div></div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-name">Tasa de defectos</div>
+                  <div class="kpi-val" style="color:#EF4444">3.1%</div>
+                  <div class="kpi-track"><div class="kpi-fill" style="width:31%;background:#EF4444;"></div></div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-name">Fill Rate</div>
+                  <div class="kpi-val" style="color:#22C55E">91.2%</div>
+                  <div class="kpi-track"><div class="kpi-fill" style="width:91%;background:#22C55E;"></div></div>
+                </div>
+              </div>
+
+              <div class="anomaly-section">
+                <div class="anomaly-lbl">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Anomalías
+                </div>
+                <div class="anomaly-row">
+                  <span class="anomaly-name">Tiempo de ciclo elevado</span>
+                  <span class="anomaly-sev">Crítica</span>
+                </div>
+              </div>
+
+              <div class="rec-card">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+                <div>
+                  <div class="rec-title">Recomendación #1</div>
+                  <div class="rec-text">Aplicar SMED en línea 2 para reducir tiempo de cambio en 40%.</div>
+                </div>
+              </div>
+
+              <div class="mockup-foot">
+                <span class="mockup-foot-txt">5 recomendaciones</span>
+                <div class="pdf-btn">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                  <span>Descargar PDF</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="float1">
+            <div class="fl-lbl">Análisis</div>
+            <div class="fl-accent">16.4s</div>
+          </div>
+          <div class="float2">
+            <div class="fl-lbl">82 tests</div>
+            <div class="fl-success">All passing ✓</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="scroll-ind">
+    <div class="scroll-mouse"><div class="scroll-dot"></div></div>
+  </div>
+  <div class="section-divider" style="position:absolute;bottom:0;left:0;right:0;"></div>
+</section>
+
+<!-- ===== STATS ===== -->
+<section class="stats-section">
+  <div class="section-center">
+    <div class="stats-card glass-strong gradient-border">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="stat-val c-accent">16.4s</div>
+          <div class="stat-lbl">Tiempo de análisis</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>
+          </div>
+          <div class="stat-val c-success">82</div>
+          <div class="stat-lbl">Tests automatizados</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>
+          </div>
+          <div class="stat-val c-blue">3</div>
+          <div class="stat-lbl">Agentes IA</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+          </div>
+          <div class="stat-val c-purple">Zero</div>
+          <div class="stat-lbl">Setup requerido</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section-divider" style="position:absolute;bottom:0;left:0;right:0;"></div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section class="features-section">
+  <div class="section-center">
+    <div class="sec-max">
+      <div class="sec-header">
+        <div class="sec-pill"><div class="pill-dot"></div><span class="pill-txt">Características</span></div>
+        <h2 class="sec-h2">Diseñada para <span class="gradient-text">procesos reales</span></h2>
+        <p class="sec-sub">No es un chatbot genérico. Es un sistema de agentes IA especializado en consultoría industrial.</p>
+      </div>
+
+      <div class="bento">
+        <div class="feat-card span2">
+          <div class="feat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+          </div>
+          <h3 class="feat-title">Agentes especializados</h3>
+          <p class="feat-desc">3 agentes LangGraph orquestados con estado explícito. Cada uno valida, analiza y recomienda de forma independiente.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h3 class="feat-title">Análisis instantáneo</h3>
+          <p class="feat-desc">Pipeline completo en menos de 2 minutos con KPIs, anomalías y recomendaciones accionables.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1"/><path d="M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1"/></svg>
+          </div>
+          <h3 class="feat-title">Mapeo inteligente</h3>
+          <p class="feat-desc">Detecta dominio y mapea columnas automáticamente. CSV o Excel.</p>
+        </div>
+
+        <div class="feat-card span2">
+          <div class="feat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EAB308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <h3 class="feat-title">Lean + Six Sigma + BPMN</h3>
+          <p class="feat-desc">Lógica de mejora de procesos industriales integrada en cada agente. No es genérico — razona como un consultor.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3 class="feat-title">Auth + Persistencia</h3>
+          <p class="feat-desc">Supabase JWT + PostgreSQL. Tus datos están seguros.</p>
+        </div>
+
+        <div class="feat-card">
+          <div class="feat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3 class="feat-title">Reportes PDF</h3>
+          <p class="feat-desc">Profesionales, descargables, con resumen ejecutivo y plan de acción.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section-divider" style="position:absolute;bottom:0;left:0;right:0;"></div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="how-section">
+  <div class="section-center">
+    <div style="max-width:860px;width:100%;">
+      <div class="sec-header">
+        <div class="sec-pill"><div class="pill-dot"></div><span class="pill-txt">Cómo funciona</span></div>
+        <h2 class="sec-h2">De datos a <span class="gradient-text">decisiones</span></h2>
+        <p class="sec-sub">Sin configuración ni consultor. Solo subís los datos y recibís las respuestas.</p>
+      </div>
+
+      <div class="steps-list">
+        <div class="step-card">
+          <div class="step-head">
+            <span class="step-num">01</span>
+            <div class="step-icon-big">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+          </div>
+          <div class="step-body">
+            <h3 class="step-title">Subís tu archivo</h3>
+            <p class="step-text">CSV o Excel de tus operaciones. Manufactura, logística, alimentos — el sistema detecta el dominio automáticamente.</p>
+            <span class="step-detail">Hasta 10 MB · CSV / XLSX</span>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-head">
+            <span class="step-num">02</span>
+            <div class="step-icon-big">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+            </div>
+          </div>
+          <div class="step-body">
+            <h3 class="step-title">3 agentes IA analizan</h3>
+            <p class="step-text">Ingestion Agent valida columnas. Analysis Agent calcula KPIs y anomalías. Recommendations Agent genera acciones concretas.</p>
+            <span class="step-detail">LangGraph · Claude Sonnet</span>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-head">
+            <span class="step-num">03</span>
+            <div class="step-icon-big">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+          </div>
+          <div class="step-body">
+            <h3 class="step-title">Diagnóstico completo</h3>
+            <p class="step-text">KPIs calculados, anomalías por severidad, tendencias identificadas y diagnóstico en lenguaje natural.</p>
+            <span class="step-detail">Lean + Six Sigma + BPMN</span>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-head">
+            <span class="step-num">04</span>
+            <div class="step-icon-big">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+            </div>
+          </div>
+          <div class="step-body">
+            <h3 class="step-title">Descargás el reporte</h3>
+            <p class="step-text">PDF profesional listo para presentar a tu equipo. Incluye resumen ejecutivo y plan de acción priorizado por impacto.</p>
+            <span class="step-detail">PDF descargable</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section-divider" style="position:absolute;bottom:0;left:0;right:0;"></div>
+</section>
+
+<!-- ===== USE CASES ===== -->
+<section class="use-section">
+  <div class="section-center">
+    <div class="sec-max">
+      <div class="sec-header">
+        <div class="sec-pill"><div class="pill-dot"></div><span class="pill-txt">Industrias</span></div>
+        <h2 class="sec-h2">Funciona para <span class="gradient-text">tu sector</span></h2>
+        <p class="sec-sub">El dominio industrial está embebido en la lógica de los agentes. No es genérico — razona como un consultor de procesos.</p>
+      </div>
+
+      <div class="cases-grid">
+        <div class="case-card">
+          <div class="case-line" style="background:linear-gradient(to right,rgba(59,130,246,0.4),transparent);"></div>
+          <div class="case-head">
+            <div class="case-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/></svg>
+            </div>
+            <div>
+              <h3 class="case-title">Manufactura</h3>
+              <p class="case-prob">OEE bajo, paradas frecuentes, defectos en línea</p>
+            </div>
+          </div>
+          <p class="case-out">KPIs de planta calculados, cuello de botella identificado, plan de acción Lean con impacto estimado.</p>
+          <div class="kpi-tags">
+            <span class="kpi-tag">OEE</span>
+            <span class="kpi-tag">Tasa de defectos</span>
+            <span class="kpi-tag">Throughput</span>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-line" style="background:linear-gradient(to right,rgba(249,115,22,0.4),transparent);"></div>
+          <div class="case-head">
+            <div class="case-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div>
+              <h3 class="case-title">Logística</h3>
+              <p class="case-prob">Entregas tardías, inventario estancado, costos altos</p>
+            </div>
+          </div>
+          <p class="case-out">Fill rate, on-time delivery y rotación de inventario calculados. Anomalías detectadas automáticamente.</p>
+          <div class="kpi-tags">
+            <span class="kpi-tag">Fill Rate</span>
+            <span class="kpi-tag">On-Time Delivery</span>
+            <span class="kpi-tag">Rotación</span>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-line" style="background:linear-gradient(to right,rgba(34,197,94,0.4),transparent);"></div>
+          <div class="case-head">
+            <div class="case-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>
+            </div>
+            <div>
+              <h3 class="case-title">Alimentos</h3>
+              <p class="case-prob">Merma elevada, rendimiento inconsistente entre lotes</p>
+            </div>
+          </div>
+          <p class="case-out">Análisis de lotes, rendimiento por línea y tendencias de merma con recomendaciones específicas.</p>
+          <div class="kpi-tags">
+            <span class="kpi-tag">Rendimiento</span>
+            <span class="kpi-tag">Merma</span>
+            <span class="kpi-tag">Eficiencia</span>
+          </div>
+        </div>
+
+        <div class="case-card">
+          <div class="case-line" style="background:linear-gradient(to right,rgba(234,179,8,0.4),transparent);"></div>
+          <div class="case-head">
+            <div class="case-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EAB308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            </div>
+            <div>
+              <h3 class="case-title">Mantenimiento</h3>
+              <p class="case-prob">Paradas no planificadas, falta de preventivo</p>
+            </div>
+          </div>
+          <p class="case-out">Patrones de falla detectados, análisis de tiempos de respuesta y plan de mantenimiento preventivo.</p>
+          <div class="kpi-tags">
+            <span class="kpi-tag">MTBF</span>
+            <span class="kpi-tag">MTTR</span>
+            <span class="kpi-tag">Disponibilidad</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section-divider" style="position:absolute;bottom:0;left:0;right:0;"></div>
+</section>
+
+<!-- ===== UPLOAD ===== -->
+<section class="cta-section" id="diagnostico">
+  <div class="section-center">
+    <div class="sec-max">
+      <div class="sec-header">
+        <div class="sec-pill"><div class="pill-dot"></div><span class="pill-txt">Análisis instantáneo</span></div>
+        <h2 class="sec-h2">Subí tu archivo <span class="gradient-text">ahora</span></h2>
+        <p class="sec-sub">CSV o Excel. Cualquier empresa, cualquier industria. Procesamos tu data sin errores.</p>
+      </div>
+
+      <div style="max-width:700px;margin:0 auto;">
+        <!-- Upload Zone -->
+        <div id="uploadZone" style="
+          border:2px dashed rgba(249,115,22,0.3);
+          border-radius:16px;
+          padding:40px;
+          text-align:center;
+          cursor:pointer;
+          transition:all 0.3s;
+          background:rgba(249,115,22,0.02);
+        "
+        onmouseover="this.style.borderColor='rgba(249,115,22,0.6)';this.style.background='rgba(249,115,22,0.05)'"
+        ondragover="event.preventDefault();this.style.borderColor='rgba(249,115,22,0.8)';this.style.background='rgba(249,115,22,0.1)'"
+        ondragleave="this.style.borderColor='rgba(249,115,22,0.3)';this.style.background='rgba(249,115,22,0.02)'"
+        ondrop="event.preventDefault();handleDrop(event)"
+        onmouseout="this.style.borderColor='rgba(249,115,22,0.3)';this.style.background='rgba(249,115,22,0.02)'">
+
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+
+          <h3 style="font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Arrastrá tu archivo aquí</h3>
+          <p style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;">o clickeá para seleccionar</p>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;">
+            <span style="font-size:11px;font-family:monospace;color:var(--text-muted);background:var(--bg-elevated);border:1px solid rgba(148,163,184,0.08);border-radius:6px;padding:4px 12px;">.csv</span>
+            <span style="font-size:11px;font-family:monospace;color:var(--text-muted);background:var(--bg-elevated);border:1px solid rgba(148,163,184,0.08);border-radius:6px;padding:4px 12px;">.xlsx</span>
+            <span style="font-size:11px;font-family:monospace;color:var(--text-muted);background:var(--bg-elevated);border:1px solid rgba(148,163,184,0.08);border-radius:6px;padding:4px 12px;">.xls</span>
+          </div>
+
+          <input type="file" id="fileInput" style="display:none;" accept=".csv,.xlsx,.xls" onchange="handleFileSelect(event)">
+        </div>
+
+        <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+          <button onclick="document.getElementById('fileInput').click()" style="
+            display:inline-flex;align-items:center;gap:8px;
+            border-radius:12px;background:linear-gradient(to right,var(--accent),#f97316);
+            padding:16px 32px;font-size:14px;font-weight:600;
+            color:white;border:none;cursor:pointer;transition:all 0.2s;
+          "
+          onmouseover="this.style.boxShadow='0 0 30px rgba(249,115,22,0.4)'"
+          onmouseout="this.style.boxShadow='none'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Seleccionar archivo
+          </button>
+
+          <button onclick="downloadSample()" style="
+            display:inline-flex;align-items:center;gap:8px;
+            border-radius:12px;background:rgba(10,18,40,0.6);border:1px solid rgba(148,163,184,0.08);
+            padding:16px 32px;font-size:14px;font-weight:600;
+            color:var(--text-primary);cursor:pointer;transition:all 0.2s;
+          "
+          onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='rgba(148,163,184,0.16)'"
+          onmouseout="this.style.background='rgba(10,18,40,0.6)';this.style.borderColor='rgba(148,163,184,0.08)'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            Descargar ejemplo
+          </button>
+        </div>
+
+        <!-- Progress -->
+        <div id="progressContainer" style="display:none;margin-top:20px;">
+          <div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:13px;font-weight:600;color:var(--text-primary);">Analizando...</span>
+              <span id="progressText" style="font-size:11px;font-family:monospace;color:var(--text-muted);">0%</span>
+            </div>
+            <div style="height:6px;border-radius:999px;background:var(--bg-elevated);overflow:hidden;">
+              <div id="progressBar" style="height:100%;width:0%;background:var(--accent);border-radius:999px;transition:width 0.3s;"></div>
+            </div>
+          </div>
+          <div id="statusText" style="font-size:12px;color:var(--text-secondary);"></div>
+        </div>
+
+        <!-- Result -->
+        <div id="resultContainer" style="display:none;margin-top:20px;border-radius:16px;border:1px solid rgba(249,115,22,0.2);background:rgba(249,115,22,0.05);padding:20px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span style="font-size:12px;color:var(--success);font-weight:600;">Análisis completado</span>
+          </div>
+          <div id="resultText" style="font-size:13px;color:var(--text-secondary);line-height:1.6;"></div>
+          <div style="margin-top:16px;display:flex;gap:12px;">
+            <a id="downloadPdfBtn" href="#" style="
+              display:inline-flex;align-items:center;gap:6px;
+              border-radius:8px;background:var(--accent);color:white;
+              padding:8px 16px;font-size:12px;font-weight:600;text-decoration:none;
+            ">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              Descargar PDF
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="section-center">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="f-logo">
+            <div class="f-logo-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <span class="f-logo-txt">Ops<span>Agent</span></span>
+          </div>
+          <p class="f-desc">Diagnóstico operativo con IA para PyMEs industriales. Lean, Six Sigma y BPMN embebidos en agentes especializados.</p>
+          <div class="tech-tags">
+            <span class="tech-tag">LangGraph</span>
+            <span class="tech-tag">Claude AI</span>
+            <span class="tech-tag">FastAPI</span>
+            <span class="tech-tag">PostgreSQL</span>
+            <span class="tech-tag">Next.js</span>
+            <span class="tech-tag">Supabase</span>
+          </div>
+        </div>
+
+        <div>
+          <p class="f-col-title">Producto</p>
+          <div class="f-links">
+            <a href="#" class="f-link">Inicio</a>
+            <a href="#diagnostico" class="f-link">Diagnóstico</a>
+          </div>
+        </div>
+
+        <div>
+          <p class="f-col-title">Conectar</p>
+          <div class="f-links">
+            <a href="https://github.com/Rolassj/opsagent" target="_blank" rel="noopener noreferrer" class="f-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v1a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9"/><path d="M12 12v3"/></svg>
+              GitHub
+            </a>
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="f-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              LinkedIn
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="f-bottom">
+        <p class="f-copy">© 2026 OpsAgent. MIT License.</p>
+        <p class="f-ver">v0.2.0 · Powered by <span>Claude API</span></p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // API base (detecta automáticamente el dominio)
+  const API_BASE = window.location.origin;
+
+  function downloadSample() {
+    const link = document.createElement('a');
+    link.href = `${API_BASE}/sample-data`;
+    link.download = 'sample_data.csv';
+    link.click();
+  }
+
+  function handleFileSelect(event) {
+    const files = event.target.files;
+    if (files.length > 0) {
+      uploadFile(files[0]);
+    }
+  }
+
+  function handleDrop(event) {
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+      uploadFile(files[0]);
+    }
+  }
+
+  async function uploadFile(file) {
+    // Validar tipo
+    const validExtensions = ['.csv', '.xlsx', '.xls'];
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+
+    if (!validExtensions.includes(ext)) {
+      alert('Solo se aceptan archivos CSV, XLSX o XLS');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('El archivo no debe exceder 10 MB');
+      return;
+    }
+
+    // Mostrar progreso
+    document.getElementById('progressContainer').style.display = 'block';
+    document.getElementById('resultContainer').style.display = 'none';
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('statusText').textContent = 'Preparando archivo...';
+
+    // Simular progreso mientras se envía
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress = Math.min(progress + Math.random() * 30, 90);
+      document.getElementById('progressBar').style.width = progress + '%';
+      document.getElementById('progressText').textContent = Math.floor(progress) + '%';
+    }, 300);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      document.getElementById('statusText').textContent = 'Enviando archivo al servidor...';
+
+      const response = await fetch(`${API_BASE}/diagnose`, {
+        method: 'POST',
+        body: formData
+      });
+
+      clearInterval(progressInterval);
+      document.getElementById('progressBar').style.width = '100%';
+      document.getElementById('progressText').textContent = '100%';
+
+      if (!response.ok) {
+        let errorMsg = `Error ${response.status}`;
+        try {
+          const error = await response.json();
+          errorMsg = error.detail || errorMsg;
+        } catch (e) {
+          const text = await response.text();
+          if (text) errorMsg = text.substring(0, 200);
+        }
+        throw new Error(errorMsg);
+      }
+
+      const result = await response.json();
+
+      // Mostrar resultado
+      setTimeout(() => {
+        document.getElementById('progressContainer').style.display = 'none';
+        document.getElementById('resultContainer').style.display = 'block';
+        document.getElementById('resultContainer').style.borderColor = 'rgba(249,115,22,0.2)';
+        document.getElementById('resultContainer').style.background = 'rgba(249,115,22,0.05)';
+
+        let resultHTML = `
+          <strong>Archivo:</strong> ${result.filename || file.name}<br>
+          <strong>Dominio detectado:</strong> ${result.domain || 'N/A'}<br>
+          <strong>KPIs identificados:</strong> ${(result.kpis || []).length}<br>
+          <strong>Anomalías:</strong> ${(result.anomalies || []).length}<br>
+          <strong>Recomendaciones:</strong> ${(result.recommendations || []).length}
+        `;
+
+        if (result.kpis && result.kpis.length > 0) {
+          resultHTML += '<br><br><strong>KPIs principales:</strong><br>';
+          result.kpis.slice(0, 3).forEach(kpi => {
+            const val = typeof kpi.value === 'number' ? kpi.value.toFixed(2) : kpi.value;
+            resultHTML += `• ${kpi.name}: ${val}<br>`;
+          });
+        }
+
+        document.getElementById('resultText').innerHTML = resultHTML;
+
+        // Configurar descarga PDF si está disponible
+        if (result.diagnose_id) {
+          document.getElementById('downloadPdfBtn').href = `${API_BASE}/diagnose/${result.diagnose_id}/pdf`;
+          document.getElementById('downloadPdfBtn').style.display = 'inline-flex';
+        }
+      }, 500);
+
+    } catch (error) {
+      clearInterval(progressInterval);
+      document.getElementById('progressContainer').style.display = 'none';
+      document.getElementById('resultContainer').style.display = 'block';
+      document.getElementById('resultContainer').style.borderColor = 'rgba(239,68,68,0.2)';
+      document.getElementById('resultContainer').style.background = 'rgba(239,68,68,0.05)';
+
+      const errorHTML = `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span style="font-size:12px;color:#ef4444;font-weight:600;">Error en el análisis</span>
+        </div>
+        <div style="font-size:12px;color:#f87171;"><strong>Detalles:</strong> ${error.message}</div>
+      `;
+
+      document.getElementById('resultText').innerHTML = errorHTML;
+    }
+
+    // Limpiar input
+    document.getElementById('fileInput').value = '';
+  }
+</script>
+</body>
+</html>
