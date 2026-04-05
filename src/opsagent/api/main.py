@@ -9,6 +9,7 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 
 logging.basicConfig(
     level=logging.INFO,
@@ -90,3 +91,21 @@ async def health_check():
         status["status"] = "degraded"
         status["warning"] = "ANTHROPIC_API_KEY no configurada"
     return status
+
+
+@app.get("/", response_class=FileResponse)
+async def serve_landing():
+    """Servir landing.html en el root."""
+    # Buscar landing.html en multiples ubicaciones
+    possible_paths = [
+        os.path.join(os.path.dirname(__file__), "..", "..", "landing.html"),  # src/opsagent/api/ -> root
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "landing.html"),  # src/opsagent/api/ -> opsagent root
+        "/app/landing.html",  # En Vercel
+    ]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            return FileResponse(path, media_type="text/html")
+
+    # Fallback: retornar un HTML básico si no se encuentra
+    return FileResponse("/dev/null", media_type="text/html")
