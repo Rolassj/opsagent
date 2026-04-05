@@ -1141,14 +1141,15 @@
           </div>
           <div id="resultText" style="font-size:13px;color:var(--text-secondary);line-height:1.6;"></div>
           <div style="margin-top:16px;display:flex;gap:12px;">
-            <a id="downloadPdfBtn" href="#" style="
+            <button id="downloadPdfBtn" onclick="downloadPdf()" style="
               display:inline-flex;align-items:center;gap:6px;
               border-radius:8px;background:var(--accent);color:white;
               padding:8px 16px;font-size:12px;font-weight:600;text-decoration:none;
+              border:none;cursor:pointer;
             ">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
               Descargar PDF
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -1278,6 +1279,52 @@
     document.getElementById('selectedFileContainer').style.display = 'none';
   }
 
+  async function downloadPdf() {
+    const btn = document.getElementById('downloadPdfBtn');
+    const diagnoseId = btn.dataset.diagnoseId;
+
+    if (!diagnoseId) {
+      alert('No hay diagnostico disponible para descargar');
+      return;
+    }
+
+    const originalText = btn.textContent;
+    btn.textContent = 'Descargando...';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch(`${API_BASE}/diagnose/${diagnoseId}/pdf`);
+
+      if (!response.ok) {
+        let errorMsg = `Error ${response.status}`;
+        try {
+          const error = await response.json();
+          errorMsg = error.detail || errorMsg;
+        } catch (e) {
+          const text = await response.text();
+          if (text) errorMsg = text.substring(0, 200);
+        }
+        throw new Error(errorMsg);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `diagnostico-${diagnoseId.substring(0, 8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    } catch (error) {
+      alert('Error al descargar PDF: ' + error.message);
+      console.error('PDF download error:', error);
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
   async function analyzeFile() {
     if (!selectedFile) {
       alert('Por favor selecciona un archivo primero');
@@ -1357,8 +1404,9 @@
 
         // Configurar descarga PDF si está disponible
         if (result.id) {
-          document.getElementById('downloadPdfBtn').href = `${API_BASE}/diagnose/${result.id}/pdf`;
-          document.getElementById('downloadPdfBtn').style.display = 'inline-flex';
+          const btn = document.getElementById('downloadPdfBtn');
+          btn.dataset.diagnoseId = result.id;
+          btn.style.display = 'inline-flex';
         }
 
         clearSelectedFile();
