@@ -1084,6 +1084,41 @@
           </button>
         </div>
 
+        <!-- Selected File Info -->
+        <div id="selectedFileContainer" style="display:none;margin-top:20px;padding:16px;border-radius:12px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:12px;flex:1;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+              <div style="flex:1;min-width:0;">
+                <p style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="selectedFileName">archivo.csv</p>
+                <p style="font-size:11px;color:var(--text-muted);" id="selectedFileSize">0 KB</p>
+              </div>
+            </div>
+            <button onclick="clearSelectedFile()" style="
+              padding:8px 12px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);
+              color:#ef4444;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;
+              white-space:nowrap;
+            "
+            onmouseover="this.style.background='rgba(239,68,68,0.2)'"
+            onmouseout="this.style.background='rgba(239,68,68,0.1)'">
+              Cambiar
+            </button>
+          </div>
+
+          <button onclick="analyzeFile()" style="
+            display:inline-flex;align-items:center;gap:8px;
+            width:100%;margin-top:12px;justify-content:center;
+            border-radius:10px;background:linear-gradient(to right,var(--accent),#f97316);
+            padding:14px 24px;font-size:14px;font-weight:600;
+            color:white;border:none;cursor:pointer;transition:all 0.2s;
+          "
+          onmouseover="this.style.boxShadow='0 0 25px rgba(249,115,22,0.4)'"
+          onmouseout="this.style.boxShadow='none'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            Analizar ahora
+          </button>
+        </div>
+
         <!-- Progress -->
         <div id="progressContainer" style="display:none;margin-top:20px;">
           <div style="margin-bottom:12px;">
@@ -1183,6 +1218,7 @@
 
   // API base (detecta automáticamente el dominio)
   const API_BASE = window.location.origin;
+  let selectedFile = null;
 
   function downloadSample() {
     const link = document.createElement('a');
@@ -1191,21 +1227,29 @@
     link.click();
   }
 
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
   function handleFileSelect(event) {
     const files = event.target.files;
     if (files.length > 0) {
-      uploadFile(files[0]);
+      selectFile(files[0]);
     }
   }
 
   function handleDrop(event) {
     const files = event.dataTransfer.files;
     if (files.length > 0) {
-      uploadFile(files[0]);
+      selectFile(files[0]);
     }
   }
 
-  async function uploadFile(file) {
+  function selectFile(file) {
     // Validar tipo
     const validExtensions = ['.csv', '.xlsx', '.xls'];
     const ext = '.' + file.name.split('.').pop().toLowerCase();
@@ -1220,7 +1264,30 @@
       return;
     }
 
+    selectedFile = file;
+    document.getElementById('selectedFileName').textContent = file.name;
+    document.getElementById('selectedFileSize').textContent = formatFileSize(file.size);
+    document.getElementById('selectedFileContainer').style.display = 'block';
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('resultContainer').style.display = 'none';
+  }
+
+  function clearSelectedFile() {
+    selectedFile = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('selectedFileContainer').style.display = 'none';
+  }
+
+  async function analyzeFile() {
+    if (!selectedFile) {
+      alert('Por favor selecciona un archivo primero');
+      return;
+    }
+
+    const file = selectedFile;
+
     // Mostrar progreso
+    document.getElementById('selectedFileContainer').style.display = 'none';
     document.getElementById('progressContainer').style.display = 'block';
     document.getElementById('resultContainer').style.display = 'none';
     document.getElementById('progressBar').style.width = '0%';
@@ -1272,7 +1339,7 @@
 
         let resultHTML = `
           <strong>Archivo:</strong> ${result.filename || file.name}<br>
-          <strong>Dominio detectado:</strong> ${result.domain || 'N/A'}<br>
+          <strong>Dominio detectado:</strong> ${result.detected_domain || 'N/A'}<br>
           <strong>KPIs identificados:</strong> ${(result.kpis || []).length}<br>
           <strong>Anomalías:</strong> ${(result.anomalies || []).length}<br>
           <strong>Recomendaciones:</strong> ${(result.recommendations || []).length}
@@ -1289,10 +1356,12 @@
         document.getElementById('resultText').innerHTML = resultHTML;
 
         // Configurar descarga PDF si está disponible
-        if (result.diagnose_id) {
-          document.getElementById('downloadPdfBtn').href = `${API_BASE}/diagnose/${result.diagnose_id}/pdf`;
+        if (result.id) {
+          document.getElementById('downloadPdfBtn').href = `${API_BASE}/diagnose/${result.id}/pdf`;
           document.getElementById('downloadPdfBtn').style.display = 'inline-flex';
         }
+
+        clearSelectedFile();
       }, 500);
 
     } catch (error) {
